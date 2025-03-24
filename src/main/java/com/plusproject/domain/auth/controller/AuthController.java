@@ -15,18 +15,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/auth/signup")
+    @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody SignupRequest request) {
         authService.signup(request);
         return ResponseEntity.ok(ApiResponse.success("회원가입에 성공했습니다."));
     }
 
-    @PostMapping("/auth/signin")
+    @PostMapping("/signin")
     public ResponseEntity<ApiResponse<AccessTokenResponse>> signin(@Valid @RequestBody SigninRequest request) {
         AccessTokenResponse response = authService.signin(request);
         return ResponseEntity.ok(ApiResponse.success(response,"로그인에 성공했습니다."));

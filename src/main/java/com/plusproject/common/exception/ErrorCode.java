@@ -15,6 +15,7 @@ public enum ErrorCode {
 
     // D
     DUPLICATE_EMAIL(CONFLICT, "이미 가입되어있는 이메일 입니다."),
+    DUPLICATE_COUPON_ISSUANCE(CONFLICT, "이미 발급받은 쿠폰입니다."),
 
     // E
     EXPIRED_JWT_TOKEN(UNAUTHORIZED, "만료된 JWT 토큰입니다."),
@@ -37,6 +38,7 @@ public enum ErrorCode {
 
     // N
     NOT_FOUND_USER(NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
+    NOT_FOUND_COUPON(NOT_FOUND, "해당 쿠폰을 찾을 수 없습니다."),
 
     // R
     REQUIRED_JWT_TOKEN(BAD_REQUEST, "JWT 토큰이 필요합니다."),

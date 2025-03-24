@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = {"email", "user_role"}))
+@Table(name = "users")
 public class User extends BaseEntity {
 
     @Id
@@ -19,7 +19,7 @@ public class User extends BaseEntity {
     @Column(name = "user_id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Column(length = 60, nullable = false)

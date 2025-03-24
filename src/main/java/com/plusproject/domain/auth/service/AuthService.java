@@ -26,7 +26,6 @@ public class AuthService {
 
     @Transactional
     public Long signup(@Valid SignupRequest request) {
-
         User newUser = User.builder()
             .email(request.getEmail())
             .password(passwordEncoder.encode(request.getPassword()))
@@ -36,7 +35,6 @@ public class AuthService {
             .build();
 
         User savedUser = userRepository.save(newUser);
-
         return savedUser.getId();
     }
 

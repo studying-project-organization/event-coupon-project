@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -50,4 +51,5 @@ public class UserService {
 
         findUser.updatePassword(passwordEncoder.encode(request.getNewPassword()));
     }
+
 }

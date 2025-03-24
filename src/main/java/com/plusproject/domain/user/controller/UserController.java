@@ -14,13 +14,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     private final UserService userService;
 
     @AdminOnly
-    @PutMapping("/users/{userId}/admin")
+    @PutMapping("/{userId}/admin")
     public ResponseEntity<ApiResponse<Void>> updateUserRole(
         @Auth AuthUser authUser,
         @PathVariable("userId") Long userId,
@@ -30,7 +30,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("유저 권한 변경에 성공했습니다."));
     }
 
-    @PutMapping("/users")
+    @PutMapping
     public ResponseEntity<ApiResponse<Void>> updatePassword(
         @Auth AuthUser authUser,
         @Valid @RequestBody UpdatePasswordRequest request
