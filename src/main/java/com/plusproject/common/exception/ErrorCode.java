@@ -29,7 +29,7 @@ public enum ErrorCode {
     INVALID_USER_TYPE(BAD_REQUEST, "유효하지 않은 사용자 유형(UserType)입니다."),
     INVALID_JWT_TOKEN(BAD_REQUEST, "유효하지 않은 JWT 토큰입니다."),
     INVALID_JWT_SIGNATURE(UNAUTHORIZED, "유효하지 않은 JWT 서명입니다."),
-    INVALID_SELF_ROLE_UPDATE(BAD_REQUEST, "자시 자신의 권한은 수정할 수 없습니다."),
+    INVALID_SELF_ROLE_UPDATE(BAD_REQUEST, "자기 자신의 권한은 수정할 수 없습니다."),
     INVALID_ADMIN_ROLE_UPDATE(BAD_REQUEST, "같은 관리자의 권한은 수정할 수 없습니다."),
     INCORRECT_PASSWORD(UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
 

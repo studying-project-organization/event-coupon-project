@@ -1,9 +1,8 @@
 package com.plusproject.domain.auth.dto.response;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 @Getter
 public class AccessTokenResponse {
 
@@ -11,5 +10,10 @@ public class AccessTokenResponse {
 
     public static AccessTokenResponse of(String accessToken) {
         return new AccessTokenResponse(accessToken);
+    }
+
+    @Builder
+    private AccessTokenResponse(String accessToken) {
+        this.accessToken = accessToken;
     }
 }
