@@ -25,7 +25,7 @@ public class AdminAccessAspect {
         String userId = String.valueOf(request.getAttribute("userId"));
         String requestUrl = request.getRequestURI();
         LocalDateTime requestTime = LocalDateTime.now();
-        UserRole userRole = UserRole.of((String) request.getAttribute("userRole"));
+        UserRole userRole = (UserRole) request.getAttribute("userRole");
 
         log.info("Admin Access Log - User ID: {}, Request Time: {}, Request URL: {}, Method: {}",
                 userId, requestTime, requestUrl, joinPoint.getSignature().getName());

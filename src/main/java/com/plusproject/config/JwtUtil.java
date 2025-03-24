@@ -13,7 +13,6 @@ import java.util.Base64;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -35,17 +34,15 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String createToken(Long userId, String email, String nickname, UserRole userRole) {
+    public String createToken(Long userId, UserRole userRole) {
         Date date = new Date();
 
         return BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(String.valueOf(userId))
-                        .claim("email", email)
-                        .claim("nickname", nickname)
                         .claim("userRole", userRole)
                         .setExpiration(new Date(date.getTime() + TOKEN_TIME))
-                        .setIssuedAt(date) // 발급일
+                        .setIssuedAt(date)
                         .signWith(key, signatureAlgorithm)
                         .compact();
     }

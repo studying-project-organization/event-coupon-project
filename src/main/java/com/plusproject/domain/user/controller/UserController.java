@@ -9,6 +9,7 @@ import com.plusproject.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,5 +36,11 @@ public class UserController {
     public ResponseEntity<ApiResponse> receiveCoupon(@Auth AuthUser authUser, @PathVariable Long couponId) {
         userService.receiveCoupon(authUser, couponId);
         return ResponseEntity.ok(ApiResponse.success("쿠폰 발급에 성공했습니다."));
+    }
+
+    @User
+    @GetMapping("/coupons")
+    public ResponseEntity<ApiResponse> findCoupons(@Auth AuthUser authUser) {
+        return ResponseEntity.ok(ApiResponse.success(userService.findCoupons(authUser), "쿠폰 조회에 성공했습니다."));
     }
 }

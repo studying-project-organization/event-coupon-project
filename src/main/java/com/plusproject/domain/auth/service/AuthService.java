@@ -41,8 +41,7 @@ public class AuthService {
         );
 
         User savedUser = userRepository.save(newUser);
-        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), savedUser.getNickname(),
-                savedUser.getUserRole());
+        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getUserRole());
         return SignupResponse.of(bearerToken);
     }
 
@@ -56,7 +55,7 @@ public class AuthService {
             throw new ApplicationException(ErrorCode.UNAUTHORIZED_WRONG_PASSWORD);
         }
 
-        String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getUserRole());
+        String bearerToken = jwtUtil.createToken(user.getId(), user.getUserRole());
         return SigninResponse.of(bearerToken);
     }
 }

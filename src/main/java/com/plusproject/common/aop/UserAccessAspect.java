@@ -21,7 +21,7 @@ public class UserAccessAspect {
 
     @Around("@annotation(com.plusproject.common.annotation.User)")
     public Object userApiAccess(ProceedingJoinPoint joinPoint) throws Throwable {
-        UserRole userRole = UserRole.of((String) request.getAttribute("userRole"));
+        UserRole userRole = (UserRole) request.getAttribute("userRole");
 
         if (!UserRole.USER.equals(userRole)) {
             throw new ApplicationException(ErrorCode.FORBIDDEN_USER_ROLE_USER);

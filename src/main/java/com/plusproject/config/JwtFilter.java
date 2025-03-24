@@ -48,8 +48,6 @@ public class JwtFilter extends OncePerRequestFilter {
             UserRole userRole = UserRole.valueOf(claims.get("userRole", String.class));
 
             request.setAttribute("userId", Long.parseLong(claims.getSubject()));
-            request.setAttribute("email", claims.get("email"));
-            request.setAttribute("name", claims.get("name"));
             request.setAttribute("userRole", userRole);
 
             chain.doFilter(request, response);

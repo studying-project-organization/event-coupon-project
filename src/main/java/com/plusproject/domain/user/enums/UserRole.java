@@ -2,7 +2,6 @@ package com.plusproject.domain.user.enums;
 
 import com.plusproject.common.exception.ApplicationException;
 import com.plusproject.common.exception.ErrorCode;
-
 import java.util.Arrays;
 
 public enum UserRole {

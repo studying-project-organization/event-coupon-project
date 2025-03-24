@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CouponService {
 
     private final CouponRepository couponRepository;
+    private final LocalDateTimeConverter localDateTimeConverter;
 
     @Transactional
     public void createCoupon(CouponCreateRequest request) {
@@ -21,8 +22,8 @@ public class CouponService {
                 request.getDescription(),
                 request.getDiscountAmount(),
                 request.getQuantity(),
-                LocalDateTimeConverter.toLocalDateTime(request.getStartDate()),
-                LocalDateTimeConverter.toLocalDateTime(request.getEndDate()));
+                localDateTimeConverter.toLocalDateTime(request.getStartDate()),
+                localDateTimeConverter.toLocalDateTime(request.getEndDate()));
 
         couponRepository.save(coupon);
     }

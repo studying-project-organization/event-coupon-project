@@ -7,7 +7,11 @@ public class LocalDateTimeConverter {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public static LocalDateTime toLocalDateTime(String date){
+    public LocalDateTime toLocalDateTime(String date){
         return LocalDateTime.parse(date, formatter);
+    }
+
+    public String toString(LocalDateTime endDate) {
+        return endDate.format(formatter);
     }
 }
