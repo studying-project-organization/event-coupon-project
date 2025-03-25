@@ -3,12 +3,10 @@ package com.plusproject.config;
 import com.plusproject.common.auth.AuthUserArgumentResolver;
 import com.plusproject.common.auth.JwtFilter;
 import com.plusproject.common.auth.JwtUtil;
-import com.plusproject.common.auth.UserRoleInterceptor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
@@ -40,11 +38,4 @@ public class WebConfig implements WebMvcConfigurer {
         resolvers.add(new AuthUserArgumentResolver());
     }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new UserRoleInterceptor())
-            .order(1)
-            .addPathPatterns("/**")
-            .excludePathPatterns("/css/**", "/js/**", "/images/**", "/webjars/**");
-    }
 }

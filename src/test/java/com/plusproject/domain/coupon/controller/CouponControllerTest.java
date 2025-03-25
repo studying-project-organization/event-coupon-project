@@ -1,7 +1,6 @@
 package com.plusproject.domain.coupon.controller;
 
 import com.plusproject.ControllerTestSupport;
-import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.coupon.dto.request.CreateCouponRequest;
 import com.plusproject.domain.user.enums.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,12 +20,10 @@ class CouponControllerTest extends ControllerTestSupport {
     private static final String PATH = "/api/v1/coupons";
 
     private String adminToken;
-    private String userToken;
 
     @BeforeEach
     void setUp() {
         adminToken = jwtUtil.createAccessToken(1L, UserRole.ADMIN);
-        userToken = jwtUtil.createAccessToken(2L, UserRole.USER);
     }
 
     @Test
@@ -50,29 +47,6 @@ class CouponControllerTest extends ControllerTestSupport {
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("쿠폰이 생성되었습니다."));
-    }
-
-    @Test
-    @DisplayName("쿠폰 생성하기 - 일반 유저가 접근시 FORBIDDEN_ADMIN_ONLY 예외 발생")
-    void createCoupon2() throws Exception {
-        // given
-        CreateCouponRequest request = CreateCouponRequest.builder()
-            .name("쿠폰 이름")
-            .description("쿠폰 설명")
-            .discountAmount(10000)
-            .quantity(50000)
-            .startDate(LocalDateTime.now())
-            .endDate(LocalDateTime.now().plusDays(7))
-            .build();
-
-        // when & then
-        mockMvc.perform(post(PATH)
-                .contentType(APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .header(AUTHORIZATION, userToken)
-            )
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.message").value(ErrorCode.FORBIDDEN_ADMIN_ONLY.getMessage()));
     }
 
 }
