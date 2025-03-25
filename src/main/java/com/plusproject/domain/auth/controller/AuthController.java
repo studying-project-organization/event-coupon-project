@@ -4,8 +4,8 @@ import com.plusproject.common.dto.ApiResponse;
 import com.plusproject.domain.auth.dto.request.SigninRequest;
 import com.plusproject.domain.auth.dto.request.SignupRequest;
 import com.plusproject.domain.auth.dto.response.SigninResponse;
-import com.plusproject.domain.auth.dto.response.SignupResponse;
 import com.plusproject.domain.auth.service.AuthService;
+import com.plusproject.domain.user.dto.response.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +19,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/api/v1/auth/signup")
-    public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest signupRequest) {
+    public ApiResponse<UserResponse> signup(@Valid @RequestBody SignupRequest signupRequest) {
         authService.signup(signupRequest);
         return ApiResponse.success("회원 가입이 성공적으로 완료되었습니다.");
     }

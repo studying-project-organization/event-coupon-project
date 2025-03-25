@@ -7,7 +7,7 @@ import com.plusproject.config.PasswordEncoder;
 import com.plusproject.domain.auth.dto.request.SigninRequest;
 import com.plusproject.domain.auth.dto.request.SignupRequest;
 import com.plusproject.domain.auth.dto.response.SigninResponse;
-import com.plusproject.domain.auth.dto.response.SignupResponse;
+import com.plusproject.domain.user.dto.response.UserResponse;
 import com.plusproject.domain.user.entity.User;
 import com.plusproject.domain.user.enums.UserRole;
 import com.plusproject.domain.user.repository.UserRepository;
@@ -24,14 +24,13 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     @Transactional
-    public SignupResponse signup(SignupRequest signupRequest) {
+    public UserResponse signup(SignupRequest signupRequest) {
 
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
             throw new ApplicationException(ErrorCode.RECEIVED_SAME_EMAIL);
         }
 
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
-
         UserRole userRole = UserRole.of(signupRequest.getUserRole());
 
         User newUser = new User(
@@ -43,9 +42,7 @@ public class AuthService {
         );
         User savedUser = userRepository.save(newUser);
 
-        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), userRole);
-
-        return new SignupResponse(bearerToken);
+        return new UserResponse(savedUser.getId(), savedUser.getEmail(), userRole.name());
     }
 
     @Transactional(readOnly = true)
