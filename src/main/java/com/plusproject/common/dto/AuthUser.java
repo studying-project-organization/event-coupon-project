@@ -19,4 +19,7 @@ public class AuthUser {
         this.userRole = userRole;
     }
 
+    public AuthUser(Long userId) {
+        this.userId = userId;
+    }
 }

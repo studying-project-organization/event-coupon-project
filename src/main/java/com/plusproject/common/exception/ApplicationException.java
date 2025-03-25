@@ -16,5 +16,4 @@ public class ApplicationException extends RuntimeException {
         super(message);
         this.status = errorCode.getHttpStatus();
     }
-
 }
