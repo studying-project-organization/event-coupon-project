@@ -4,12 +4,15 @@ import com.plusproject.common.exception.ApplicationException;
 import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.coupon.entity.Coupons;
 import com.plusproject.domain.coupon.repository.CouponRepository;
+import com.plusproject.domain.user.dto.response.FindUserCouponResponse;
 import com.plusproject.domain.user.entity.Users;
 import com.plusproject.domain.user.service.UserService;
 import com.plusproject.domain.usercoupon.entity.UserCoupons;
 import com.plusproject.domain.usercoupon.repository.UserCouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,5 +27,12 @@ public class UserCouponService {
         Users user = userServ.findUser(userId);
 
         userCouponRepo.save(new UserCoupons(user, coupon));
+    }
+
+    public List<FindUserCouponResponse> findAllUserCoupons(Long userId) {
+        return userCouponRepo.findByUser_Id(userId)
+                .stream()
+                .map(FindUserCouponResponse::of)
+                .toList();
     }
 }

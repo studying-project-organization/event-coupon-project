@@ -29,6 +29,8 @@ public class UserCoupons extends BaseEntity {
     @JoinColumn(name = "coupon_id")
     private Coupons coupon;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private CouponStatus couponStatus = CouponStatus.UNUSED;
 
     public UserCoupons(Users user, Coupons coupon) {
