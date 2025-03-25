@@ -15,3 +15,4 @@ public class ErrorResponse {
     private final LocalDateTime timestamp;
 
 }
+

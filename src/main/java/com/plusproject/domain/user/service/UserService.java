@@ -39,7 +39,7 @@ public class UserService {
         }
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-            throw new ApplicationException(ErrorCode.BAD_REQUEST_DO_NOT_MATCH_OLD_PASSWORD);
+            throw new ApplicationException(ErrorCode.BAD_REQUEST_NOT_MATCH_OLD_PASSWORD);
         }
 
         user.changePassword(passwordEncoder.encode(request.getNewPassword()));
@@ -55,6 +55,11 @@ public class UserService {
             throw new ApplicationException(ErrorCode.BAD_REQUEST_ALREADY_HAVE_COUPON);
         }
 
+        if (coupon.getQuantity() == 0) {
+            throw new ApplicationException(ErrorCode.BAD_REQUEST_QUANTITY_IS_ZERO);
+        }
+
+        coupon.consume();
         UserCoupon userCoupon = UserCoupon.toEntity(user, coupon, CouponStatus.RECEIVE);
         userCouponRepository.save(userCoupon);
     }

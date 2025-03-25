@@ -16,4 +16,12 @@ public interface UserCouponRepository extends BaseRepository<UserCoupon, Long> {
             }
     )
     List<UserCoupon> findAllByUserId(Long userId);
+
+    @EntityGraph(
+            attributePaths = {
+                    "user",
+                    "coupon"
+            }
+    )
+    UserCoupon findByIdAndUserId(Long couponId, Long userId);
 }

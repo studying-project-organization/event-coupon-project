@@ -17,8 +17,9 @@ public enum ErrorCode {
     BAD_REQUEST_EXIST_EMAIL(BAD_REQUEST, "이미 존재하는 이메일입니다."),
     BAD_REQUEST_NOT_SIGN_UP_USER(BAD_REQUEST, "가입되지 않은 유저입니다."),
     BAD_REQUEST_DO_NOT_MATCH_OLD_AND_NEW_PASSWORD(BAD_REQUEST, "새 비밀번호는 기존 비밀번호와 같을 수 없습니다."),
-    BAD_REQUEST_DO_NOT_MATCH_OLD_PASSWORD(BAD_REQUEST, "기존 비밀번호와 일치하지 않습니다."),
+    BAD_REQUEST_NOT_MATCH_OLD_PASSWORD(BAD_REQUEST, "기존 비밀번호와 일치하지 않습니다."),
     BAD_REQUEST_ALREADY_HAVE_COUPON(BAD_REQUEST, "이미 해당 쿠폰을 가지고 있습니다."),
+    BAD_REQUEST_QUANTITY_IS_ZERO(BAD_REQUEST, "해당 쿠폰의 모든 수량이 소모되었습니다."),
     // C
 
     // F

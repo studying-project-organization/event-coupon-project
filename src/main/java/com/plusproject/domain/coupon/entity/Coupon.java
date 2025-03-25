@@ -40,9 +40,19 @@ public class Coupon extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime endDate;
 
+    public Coupon(Long id, String name, String description, Integer discountAmount, Integer quantity,
+                  LocalDateTime startDate, LocalDateTime endDate) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.discountAmount = discountAmount;
+        this.quantity = quantity;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 
     private Coupon(String name, String description, Integer discountAmount, Integer quantity,
-                  LocalDateTime startDate, LocalDateTime endDate) {
+                   LocalDateTime startDate, LocalDateTime endDate) {
         this.name = name;
         this.description = description;
         this.discountAmount = discountAmount;
@@ -54,5 +64,9 @@ public class Coupon extends BaseEntity {
     public static Coupon toEntity(String name, String description, Integer discountAmount, Integer quantity,
                                   LocalDateTime startDate, LocalDateTime endDate){
         return new Coupon(name, description, discountAmount, quantity, startDate, endDate);
+    }
+
+    public void consume() {
+        this.quantity = this.quantity - 1;
     }
 }

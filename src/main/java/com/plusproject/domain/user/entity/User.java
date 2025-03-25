@@ -41,6 +41,15 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private UserRole userRole;
 
+    public User(Long id, String email, String password, String nickname, String address, UserRole userRole) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.address = address;
+        this.userRole = userRole;
+    }
+
     private User(String email, String password, String nickname, String address, UserRole userRole) {
         this.email = email;
         this.password = password;

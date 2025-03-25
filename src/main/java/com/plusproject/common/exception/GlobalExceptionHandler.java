@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
         return getErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다. 관리자에게 문의하세요.");
     }
 
-    private ResponseEntity<com.plusproject.common.dto.ErrorResponse> getErrorResponse(HttpStatus status, String message) {
+    private ResponseEntity<ErrorResponse> getErrorResponse(HttpStatus status, String message) {
         ErrorResponse response = new ErrorResponse(
             status.name(),
             status.value(),

@@ -5,4 +5,5 @@ import com.plusproject.domain.coupon.entity.Coupon;
 
 public interface CouponRepository extends BaseRepository<Coupon, Long> {
 
+    Coupon findByName(String name);
 }
