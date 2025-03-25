@@ -36,7 +36,11 @@ public class Users extends BaseEntity {
         this.nickname = req.getNickname();
     }
 
-    public void adminGrant() {
+    public void updateRole() {
         this.role = UserRole.ADMIN;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
     }
 }

@@ -7,6 +7,7 @@ import com.plusproject.common.jwt.JwtUtil;
 import com.plusproject.config.PasswordEncoder;
 import com.plusproject.domain.user.dto.request.CreateUserRequest;
 import com.plusproject.domain.user.dto.request.LoginRequest;
+import com.plusproject.domain.user.dto.request.UpdatePasswordRequest;
 import com.plusproject.domain.user.entity.Users;
 import com.plusproject.domain.user.enums.UserRole;
 import com.plusproject.domain.user.repository.UserRepository;
@@ -57,10 +58,16 @@ public class UserService {
             throw new ApplicationException(ErrorCode.NO_PERMISSION_ACTION);
         }
 
-        findUser(targetId).adminGrant();
+        findUser(targetId).updateRole();
 
         return ApiResponse.success("유저 권한 변경에 성공했습니다.");
     }
 
-//    public ApiResponse<Void>
+    public ApiResponse<Void> updatePassword(Long userId, UpdatePasswordRequest req) {
+        Users loginUser = findUser(userId);
+
+        loginUser.updatePassword(req.getPassword());
+
+        return ApiResponse.success("비밀번호 변경에 성공했습니다.");
+    }
 }
