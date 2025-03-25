@@ -14,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @RequiredArgsConstructor
 @Service
 @Transactional
@@ -30,7 +28,7 @@ public class UserService {
 
         if (!userRepo.existsByEmail(req.getEmail())) {
             userRepo.save(users);
-            return ApiResponse.success(req.getNickname() + " 회원가입 성공");
+            return ApiResponse.success(req.getNickname() + "회원 가입에 성공했습니다.");
         } else {
             throw new ApplicationException(ErrorCode.DUPLICATED_EMAIL, "중복된 이메일입니다.");
         }
@@ -50,10 +48,10 @@ public class UserService {
 
         String token = jwtUtil.generateToken(user.getId()).get("token");
 
-        return ApiResponse.success(token, "로그인 성공");
+        return ApiResponse.success(token, "로그인에 성공했습니다.");
     }
 
-    public ApiResponse<Void> adminGrant(Long loginId, Long targetId) {
+    public ApiResponse<Void> updateUserRole(Long loginId, Long targetId) {
         UserRole role = findUser(loginId).getRole();
         if (!role.equals(UserRole.ADMIN)) {
             throw new ApplicationException(ErrorCode.NO_PERMISSION_ACTION);
@@ -63,4 +61,6 @@ public class UserService {
 
         return ApiResponse.success("유저 권한 변경에 성공했습니다.");
     }
+
+//    public ApiResponse<Void>
 }

@@ -1,6 +1,5 @@
 package com.plusproject.domain.user.controller;
 
-import com.plusproject.common.annotation.Auth;
 import com.plusproject.common.annotation.UserId;
 import com.plusproject.common.dto.ApiResponse;
 import com.plusproject.domain.user.dto.request.CreateUserRequest;
@@ -31,6 +30,11 @@ public class UserController {
 
     @PutMapping("/users/{userId}/admin")
     public ResponseEntity<ApiResponse<Void>> adminGrant(@UserId Long loginUserId, @PathVariable Long userId) {
-        return ResponseEntity.ok().body(userServ.adminGrant(loginUserId, userId));
+        return ResponseEntity.ok().body(userServ.updateUserRole(loginUserId, userId));
     }
+//
+//    @PutMapping("/users")
+//    public ResponseEntity<ApiResponse<Void>> updatePassword() {
+//
+//    }
 }
