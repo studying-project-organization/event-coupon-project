@@ -10,12 +10,12 @@ import lombok.NoArgsConstructor;
 @Getter
 public class AuthUser {
 
-    private Long userId;
+    private Long id;
     private UserRole userRole;
 
     @Builder
-    private AuthUser(Long userId, UserRole userRole) {
-        this.userId = userId;
+    private AuthUser(Long id, UserRole userRole) {
+        this.id = id;
         this.userRole = userRole;
     }
 

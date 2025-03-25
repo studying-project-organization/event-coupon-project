@@ -24,7 +24,7 @@ public class ApiResponse<T> {
     }
 
     // ✅ 성공 응답 (메시지만 반환)
-    public static <T> ApiResponse<T> success(String message) {
+    public static ApiResponse<Void> success(String message) {
         return new ApiResponse<>(HttpStatus.OK.value(), HttpStatus.OK.name(), message, null);
     }
 
