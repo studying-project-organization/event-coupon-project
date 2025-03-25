@@ -27,5 +27,4 @@ public class ApiResponse<T> {
     public static ApiResponse<Void> success(String message) {
         return new ApiResponse<>(HttpStatus.OK.value(), HttpStatus.OK.name(), message, null);
     }
-
 }

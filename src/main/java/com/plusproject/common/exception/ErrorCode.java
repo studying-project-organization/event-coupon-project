@@ -15,6 +15,9 @@ public enum ErrorCode {
 
     // C
 
+    // D
+    DUPLICATED_EMAIL(BAD_REQUEST, "이메일 중복입니다."),
+
     // E
     EXPIRED_TOKEN(UNAUTHORIZED, "토큰이 만료되었습니다."),
 
@@ -22,9 +25,9 @@ public enum ErrorCode {
     INVALID_USER_TYPE(BAD_REQUEST, "유효하지 않은 사용자 유형(UserType)입니다."),
     INVALID_TOKEN(UNAUTHORIZED, "유효하지 않은 토큰입니다."),
 
-
     // N,
     NOT_FOUND_USER(NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
+    NO_PERMISSION_ACTION(HttpStatus.FORBIDDEN, "권한이 없는 작업입니다."),
 
     // T
     TOKEN_MISSING(HttpStatus.UNAUTHORIZED, "토큰이 제공되지 않았습니다."),

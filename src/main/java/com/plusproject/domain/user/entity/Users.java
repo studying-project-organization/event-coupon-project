@@ -27,7 +27,7 @@ public class Users extends BaseEntity {
 
     private String password;
 
-    private final UserRole role = UserRole.USER;
+    private UserRole role = UserRole.USER;
 
     public Users(CreateUserRequest req) {
         this.address = req.getAddress();
@@ -36,5 +36,7 @@ public class Users extends BaseEntity {
         this.nickname = req.getNickname();
     }
 
-
+    public void adminGrant() {
+        this.role = UserRole.ADMIN;
+    }
 }
