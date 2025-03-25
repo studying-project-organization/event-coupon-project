@@ -1,8 +1,12 @@
 package com.plusproject.domain.coupon.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plusproject.config.JwtUtil;
 import com.plusproject.config.LocalDateTimeConverter;
 import com.plusproject.config.PasswordEncoder;
@@ -17,22 +21,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
 class CouponControllerTest {
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private MockMvc mockMvc;
 
     @Autowired
     private UserRepository userRepository;
@@ -52,16 +53,17 @@ class CouponControllerTest {
     @Autowired
     private LocalDateTimeConverter localDateTimeConverter;
 
-    private HttpHeaders headers;
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private String adminToken;
     private User adminUser;
 
     @Nested
     class 쿠폰_생성_테스트 {
+
         @BeforeEach
         public void setUp() {
-            headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
             // 데이터 초기화
             userCouponRepository.deleteAll();
             userRepository.deleteAll();
@@ -72,13 +74,12 @@ class CouponControllerTest {
             adminUser = User.toEntity("admin@example.com", encodedPassword, "admin", "adminAddress", UserRole.ADMIN);
             userRepository.save(adminUser);
 
-            // JWT 토큰 생성 및 헤더 설정
-            String token = jwtUtil.createToken(adminUser.getId(), adminUser.getUserRole());
-            headers.set("Authorization", token);
+            // JWT 토큰 생성
+            adminToken = jwtUtil.createToken(adminUser.getId(), adminUser.getUserRole());
         }
 
         @Test
-        public void 관리자가_쿠폰_생성_성공() {
+        public void 관리자가_쿠폰_생성_성공() throws Exception {
             // Given
             CouponCreateRequest request = new CouponCreateRequest(
                     "New Coupon",
@@ -88,24 +89,18 @@ class CouponControllerTest {
                     "2025-03-25 00:00:00",
                     "2025-03-30 23:59:59"
             );
-            HttpEntity<CouponCreateRequest> entity = new HttpEntity<>(request, headers);
 
-            // When
-            ResponseEntity<String> response = restTemplate.exchange(
-                    "/api/v1/coupons",
-                    HttpMethod.POST,
-                    entity,
-                    String.class
-            );
-
-            // Then
-            System.out.println("Response: " + response.getBody());
-            assertEquals(HttpStatus.OK, response.getStatusCode(), "Response: " + response.getBody());
-            assertTrue(response.getBody().contains("쿠폰이 생성되었습니다."));
+            // When & Then
+            mockMvc.perform(post("/api/v1/coupons")
+                            .header("Authorization", adminToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString("쿠폰이 생성되었습니다.")));
 
             // DB에서 쿠폰 생성 확인
             Coupon createdCoupon = couponRepository.findByName("New Coupon");
-            assertTrue(createdCoupon != null);
+            assertNotNull(createdCoupon);
             assertEquals("New Coupon", createdCoupon.getName());
             assertEquals(2000, createdCoupon.getDiscountAmount());
             assertEquals(5, createdCoupon.getQuantity());
@@ -114,13 +109,12 @@ class CouponControllerTest {
         }
 
         @Test
-        public void 유저가_쿠폰_생성_시도_시_실패() {
-            // Given: 일반 사용자 토큰으로 변경
+        public void 일반_사용자가_쿠폰_생성_시도_시_실패() throws Exception {
+            // Given: 일반 사용자 토큰
             String userEncodedPassword = passwordEncoder.encode("!UserPassword1");
             User normalUser = User.toEntity("user@example.com", userEncodedPassword, "user", "userAddress", UserRole.USER);
             userRepository.save(normalUser);
             String userToken = jwtUtil.createToken(normalUser.getId(), normalUser.getUserRole());
-            headers.set("Authorization", userToken);
 
             CouponCreateRequest request = new CouponCreateRequest(
                     "Invalid Coupon",
@@ -130,45 +124,35 @@ class CouponControllerTest {
                     "2025-03-25 00:00:00",
                     "2025-03-30 23:59:59"
             );
-            HttpEntity<CouponCreateRequest> entity = new HttpEntity<>(request, headers);
 
-            // When
-            ResponseEntity<String> response = restTemplate.exchange(
-                    "/api/v1/coupons",
-                    HttpMethod.POST,
-                    entity,
-                    String.class
-            );
-
-            // Then
-            assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-            assertTrue(response.getBody().contains("관리자 권한이 필요합니다."));
+            // When & Then
+            mockMvc.perform(post("/api/v1/coupons")
+                            .header("Authorization", userToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isForbidden())
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString("관리자 권한이 필요합니다.")));
         }
 
         @Test
-        public void 데이터가_유효하지_않을_경우_쿠폰_생성_실패() {
+        public void 유효하지_않은_데이터로_쿠폰_생성_시_실패() throws Exception {
             // Given: 유효하지 않은 데이터
             CouponCreateRequest request = new CouponCreateRequest(
                     "Invalid Coupon",
                     "Test Coupon Description",
-                    null, //유효하지 않은 값.
+                    null, // 유효하지 않은 값
                     5,
                     "2025-03-25 00:00:00",
                     "2025-03-30 23:59:59"
             );
-            HttpEntity<CouponCreateRequest> entity = new HttpEntity<>(request, headers);
 
-            // When
-            ResponseEntity<String> response = restTemplate.exchange(
-                    "/api/v1/coupons",
-                    HttpMethod.POST,
-                    entity,
-                    String.class
-            );
-
-            // Then
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            assertTrue(response.getBody().contains("쿠폰 할인 가격은 필수값입니다."));
+            // When & Then
+            mockMvc.perform(post("/api/v1/coupons")
+                            .header("Authorization", adminToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString("쿠폰 할인 가격은 필수값입니다.")));
         }
     }
 }

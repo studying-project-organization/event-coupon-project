@@ -1,6 +1,5 @@
 package com.plusproject.domain.user.entity;
 
-import com.plusproject.common.dto.AuthUser;
 import com.plusproject.common.entity.BaseEntity;
 import com.plusproject.domain.user.enums.UserRole;
 import jakarta.persistence.Column;
@@ -41,25 +40,11 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private UserRole userRole;
 
-    public User(Long id, String email, String password, String nickname, String address, UserRole userRole) {
-        this.id = id;
-        this.email = email;
-        this.password = password;
-        this.nickname = nickname;
-        this.address = address;
-        this.userRole = userRole;
-    }
-
     private User(String email, String password, String nickname, String address, UserRole userRole) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.address = address;
-        this.userRole = userRole;
-    }
-
-    private User(Long id, UserRole userRole) {
-        this.id = id;
         this.userRole = userRole;
     }
 
@@ -69,10 +54,6 @@ public class User extends BaseEntity {
 
     public void updateRole(UserRole userRole) {
         this.userRole = userRole;
-    }
-
-    public static User fromAuthUser(AuthUser authUser) {
-        return new User(authUser.getUserId(), authUser.getUserRole());
     }
 
     public static User toEntity(String email, String password, String nickname, String address, UserRole userRole){
