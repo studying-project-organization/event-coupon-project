@@ -24,12 +24,12 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public ApiResponse<Void> createUser(CreateUserRequest req) {
+    public void createUser(CreateUserRequest req) {
         Users users = new Users(req);
 
         if (!userRepo.existsByEmail(req.getEmail())) {
             userRepo.save(users);
-            return ApiResponse.success(req.getNickname() + "회원 가입에 성공했습니다.");
+//            return ApiResponse.success(req.getNickname() + "회원 가입에 성공했습니다.");
         } else {
             throw new ApplicationException(ErrorCode.DUPLICATED_EMAIL, "중복된 이메일입니다.");
         }
@@ -39,7 +39,7 @@ public class UserService {
         return userRepo.findByIdOrElseThrow(id, ErrorCode.NOT_FOUND_USER);
     }
 
-    public ApiResponse<String> login(LoginRequest req){
+    public String login(LoginRequest req){
         Users user = userRepo.findByEmail(req.getEmail()).orElseThrow(() ->
                 new ApplicationException(ErrorCode.NOT_FOUND_USER, "이메일을 다시 입력해주세요."));
 
@@ -47,27 +47,21 @@ public class UserService {
             throw new ApplicationException(ErrorCode.NOT_FOUND_USER, "비밀번호를 다시 입력해주세요.");
         }
 
-        String token = jwtUtil.generateToken(user.getId()).get("token");
-
-        return ApiResponse.success(token, "로그인에 성공했습니다.");
+        return jwtUtil.createAccessToken(user.getId(), user.getRole());
     }
 
-    public ApiResponse<Void> updateUserRole(Long loginId, Long targetId) {
+    public void updateUserRole(Long loginId, Long targetId) {
         UserRole role = findUser(loginId).getRole();
         if (!role.equals(UserRole.ADMIN)) {
             throw new ApplicationException(ErrorCode.NO_PERMISSION_ACTION);
         }
 
         findUser(targetId).updateRole();
-
-        return ApiResponse.success("유저 권한 변경에 성공했습니다.");
     }
 
-    public ApiResponse<Void> updatePassword(Long userId, UpdatePasswordRequest req) {
+    public void updatePassword(Long userId, UpdatePasswordRequest req) {
         Users loginUser = findUser(userId);
 
         loginUser.updatePassword(req.getPassword());
-
-        return ApiResponse.success("비밀번호 변경에 성공했습니다.");
     }
 }

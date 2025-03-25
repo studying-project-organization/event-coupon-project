@@ -4,6 +4,7 @@ import com.plusproject.common.entity.BaseEntity;
 import com.plusproject.domain.coupon.entity.Coupons;
 import com.plusproject.domain.user.entity.Users;
 import com.plusproject.domain.coupon.enums.CouponStatus;
+import com.plusproject.domain.usercoupon.dto.request.CouponIssueRequest;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,5 +29,10 @@ public class UserCoupons extends BaseEntity {
     @JoinColumn(name = "coupon_id")
     private Coupons coupon;
 
-    private CouponStatus couponStatus;
+    private CouponStatus couponStatus = CouponStatus.UNUSED;
+
+    public UserCoupons(Users user, Coupons coupon) {
+        this.user = user;
+        this.coupon = coupon;
+    }
 }
