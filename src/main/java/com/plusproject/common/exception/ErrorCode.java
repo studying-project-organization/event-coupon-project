@@ -39,6 +39,7 @@ public enum ErrorCode {
     // N
     NOT_FOUND_USER(NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
     NOT_FOUND_COUPON(NOT_FOUND, "해당 쿠폰을 찾을 수 없습니다."),
+    NOT_FOUND_USER_COUPON(NOT_FOUND, "해당 유저쿠폰 테이블을 찾을 수 없습니다."),
 
     // R
     REQUIRED_JWT_TOKEN(BAD_REQUEST, "JWT 토큰이 필요합니다."),

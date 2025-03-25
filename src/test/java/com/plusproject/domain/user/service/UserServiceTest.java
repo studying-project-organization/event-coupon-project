@@ -11,6 +11,7 @@ import com.plusproject.domain.user.entity.User;
 import com.plusproject.domain.user.enums.UserRole;
 import com.plusproject.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class UserServiceTest extends SpringBootTestSupport {
     @Autowired
     private UserService userService;
 
-    @Autowired
+    @PersistenceContext
     private EntityManager em;
 
     private User user;

@@ -2,6 +2,7 @@ package com.plusproject.domain.coupon.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -28,5 +29,15 @@ public class CreateCouponRequest {
 
     @NotNull(message = "쿠폰 종료일 입력은 필수입니다.")
     private LocalDateTime endDate;
+
+    @Builder
+    private CreateCouponRequest(String name, String description, Integer discountAmount, Integer quantity, LocalDateTime startDate, LocalDateTime endDate) {
+        this.name = name;
+        this.description = description;
+        this.discountAmount = discountAmount;
+        this.quantity = quantity;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 
 }

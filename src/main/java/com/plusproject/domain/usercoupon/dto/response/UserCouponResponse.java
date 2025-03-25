@@ -1,5 +1,6 @@
 package com.plusproject.domain.usercoupon.dto.response;
 
+import com.plusproject.domain.coupon.enums.CouponStatus;
 import com.plusproject.domain.usercoupon.entity.UserCoupon;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,6 +13,7 @@ public class UserCouponResponse {
     private final Long id;
     private final String name;
     private final String description;
+    private final CouponStatus status;
     private final Integer discountAmount;
     private final LocalDateTime startDate;
     private final LocalDateTime endDate;
@@ -24,6 +26,7 @@ public class UserCouponResponse {
             .name(userCoupon.getCoupon().getName())
             .description(userCoupon.getCoupon().getDescription())
             .discountAmount(userCoupon.getCoupon().getDiscountAmount())
+            .status(userCoupon.getStatus())
             .startDate(userCoupon.getCoupon().getStartDate())
             .endDate(userCoupon.getCoupon().getEndDate())
             .createdAt(userCoupon.getCreatedAt())
@@ -32,10 +35,11 @@ public class UserCouponResponse {
     }
 
     @Builder
-    private UserCouponResponse(Long id, String name, String description, Integer discountAmount, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createdAt, LocalDateTime modifiedAt) {
+    private UserCouponResponse(Long id, String name, String description, CouponStatus status, Integer discountAmount, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createdAt, LocalDateTime modifiedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.status = status;
         this.discountAmount = discountAmount;
         this.startDate = startDate;
         this.endDate = endDate;

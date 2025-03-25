@@ -12,6 +12,7 @@ import com.plusproject.domain.user.entity.User;
 import com.plusproject.domain.user.enums.UserRole;
 import com.plusproject.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ class AuthServiceTest extends SpringBootTestSupport {
     @Autowired
     private AuthService authService;
 
-    @Autowired
+    @PersistenceContext
     private EntityManager em;
 
     private User user;
@@ -54,7 +55,6 @@ class AuthServiceTest extends SpringBootTestSupport {
         userRepository.save(user);
 
         em.flush();
-        em.clear();
     }
 
     @Test
@@ -67,7 +67,6 @@ class AuthServiceTest extends SpringBootTestSupport {
             .nickname("테스트")
             .address("서울")
             .build();
-
 
         // when
         Long userId = authService.signup(request);

@@ -27,4 +27,5 @@ public class CouponService {
         Coupon savedCoupon = couponRepository.save(newCoupon);
         return savedCoupon.getId();
     }
+
 }
