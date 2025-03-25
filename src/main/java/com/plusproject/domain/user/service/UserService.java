@@ -3,7 +3,7 @@ package com.plusproject.domain.user.service;
 import com.plusproject.common.dto.ApiResponse;
 import com.plusproject.common.exception.ApplicationException;
 import com.plusproject.common.exception.ErrorCode;
-import com.plusproject.common.jwt.JwtUtil;
+import com.plusproject.common.auth.JwtUtil;
 import com.plusproject.config.PasswordEncoder;
 import com.plusproject.domain.user.dto.request.CreateUserRequest;
 import com.plusproject.domain.user.dto.request.LoginRequest;

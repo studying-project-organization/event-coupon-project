@@ -1,7 +1,8 @@
-package com.plusproject.config;
+package com.plusproject.common.auth;
 
 import com.plusproject.common.annotation.Auth;
 import com.plusproject.common.dto.AuthUser;
+import com.plusproject.domain.user.enums.UserRole;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -28,11 +29,14 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
                                   ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest,
                                   WebDataBinderFactory binderFactory) throws Exception {
+
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
-
-        // JwtFilter 에서 set 한 userId 값을 가져옴
         Long userId = (Long) request.getAttribute("userId");
+        UserRole userRole = UserRole.of((String) request.getAttribute("userRole"));
 
-        return new AuthUser(userId);
+        return AuthUser.builder()
+                .userId(userId)
+                .userRole(userRole)
+                .build();
     }
 }
