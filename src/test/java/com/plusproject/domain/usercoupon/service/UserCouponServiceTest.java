@@ -82,8 +82,6 @@ class UserCouponServiceTest extends SpringBootTestSupport {
             .id(user.getId())
             .userRole(user.getUserRole())
             .build();
-
-        em.clear();
     }
 
     @Test
@@ -114,7 +112,7 @@ class UserCouponServiceTest extends SpringBootTestSupport {
                 coupon.getName(),
                 coupon.getDescription(),
                 coupon.getDiscountAmount(),
-                coupon.getQuantity() - 1
+                coupon.getQuantity()
             );
     }
 

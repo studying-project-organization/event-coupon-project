@@ -37,7 +37,6 @@ public class UserCouponService {
         try {
             AtomicReference<Long> userCouponId = new AtomicReference<>();
             lockManager.executeWithLock(request.getCouponId(), () -> {
-
                 User findUser = userRepository.findByIdOrElseThrow(authUser.getId(), ErrorCode.NOT_FOUND_USER);
                 Coupon findCoupon = couponRepository.findByIdOrElseThrow(request.getCouponId(), ErrorCode.NOT_FOUND_COUPON);
 
