@@ -25,6 +25,11 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
+    public LocalDateTimeConverter localDateTimeConverter(){
+        return new LocalDateTimeConverter();
+    }
+
+    @Bean
     public FilterRegistrationBean<JwtFilter> jwtFilter() {
         FilterRegistrationBean<JwtFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new JwtFilter(jwtUtil()));
