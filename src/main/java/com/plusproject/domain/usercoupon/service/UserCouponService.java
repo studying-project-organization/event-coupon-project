@@ -24,7 +24,6 @@ import java.util.List;
 public class UserCouponService {
 
     private final UserCouponRepository userCouponRepository;
-
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
 
