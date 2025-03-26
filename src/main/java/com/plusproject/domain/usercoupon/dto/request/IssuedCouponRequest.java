@@ -16,4 +16,5 @@ public class IssuedCouponRequest {
     private IssuedCouponRequest(Long couponId) {
         this.couponId = couponId;
     }
+
 }

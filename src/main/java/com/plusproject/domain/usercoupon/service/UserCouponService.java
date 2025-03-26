@@ -33,9 +33,15 @@ public class UserCouponService {
         User findUser = userRepository.findByIdOrElseThrow(authUser.getId(), ErrorCode.NOT_FOUND_USER);
         Coupon findCoupon = couponRepository.findByIdOrElseThrow(request.getCouponId(), ErrorCode.NOT_FOUND_COUPON);
 
-        if (userCouponRepository.existsByUser_IdAndCoupon_Id(findUser.getId(), findCoupon.getId())) {
-            throw new ApplicationException(ErrorCode.DUPLICATE_COUPON_ISSUANCE);
+//        if (userCouponRepository.existsByUser_IdAndCoupon_Id(findUser.getId(), findCoupon.getId())) {
+//            throw new ApplicationException(ErrorCode.DUPLICATE_COUPON_ISSUANCE);
+//        }
+
+        if (findCoupon.getQuantity() <= 0) {
+            throw new ApplicationException(ErrorCode.EXHAUSETD_COUPON);
         }
+
+        findCoupon.decrementQuantity();
 
         UserCoupon newUserCoupon = UserCoupon.builder()
             .user(findUser)

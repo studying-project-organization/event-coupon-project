@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.plusproject.common.dto.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +58,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleSqlException(DataIntegrityViolationException ex) {
         return getErrorResponse(HttpStatus.BAD_REQUEST, "Unique 제약으로 중복된 데이터 생성이 불가능합니다.");
+    }
+
+    // 데드락 등 동시성 문제 (Spring Data JPA)
+    @ExceptionHandler(CannotAcquireLockException.class)
+    public ResponseEntity<ErrorResponse> handleCannotAcquireLockException(CannotAcquireLockException ex) {
+        return getErrorResponse(HttpStatus.CONFLICT, "데이터베이스 데드락 발생");
+    }
+
+    // 기타 데이터 접근 예외
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException ex) {
+        return getErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "데이터베이스 접근 오류: " + ex.getMessage());
     }
 
     @ExceptionHandler(RuntimeException.class)
