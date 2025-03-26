@@ -3,13 +3,11 @@ package com.plusproject.domain.coupon.controller;
 import com.plusproject.ControllerTestSupport;
 import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.coupon.dto.request.CreateCouponRequest;
-import com.plusproject.domain.coupon.service.CouponService;
 import com.plusproject.domain.user.enums.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Transactional
 class CouponControllerTest extends ControllerTestSupport {
 
     private static final String PATH = "/api/v1/coupons";

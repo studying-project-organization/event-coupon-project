@@ -6,10 +6,8 @@ import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.auth.dto.request.SigninRequest;
 import com.plusproject.domain.auth.dto.request.SignupRequest;
 import com.plusproject.domain.auth.dto.response.AccessTokenResponse;
-import com.plusproject.domain.auth.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.containsString;

@@ -4,14 +4,9 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 import static org.springframework.http.HttpStatus.*;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Getter
 public enum ErrorCode {
-
-    // A
-
-    // C
 
     // D
     DUPLICATE_EMAIL(CONFLICT, "이미 가입되어있는 이메일 입니다."),
@@ -49,7 +44,6 @@ public enum ErrorCode {
 
     // U
     UNSUPPORTED_JWT_TOKEN(BAD_REQUEST, "지원되지 않는 JWT 토큰입니다.");
-
 
     private final HttpStatus httpStatus;
     private final String message;

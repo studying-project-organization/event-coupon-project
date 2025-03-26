@@ -6,11 +6,10 @@ import com.plusproject.common.exception.ApplicationException;
 import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.user.enums.UserRole;
 import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
-import com.plusproject.domain.usercoupon.service.UserCouponService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -21,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Transactional
 class UserCouponControllerTest extends ControllerTestSupport {
 
     private static final String PATH = "/api/v1/user-coupon";

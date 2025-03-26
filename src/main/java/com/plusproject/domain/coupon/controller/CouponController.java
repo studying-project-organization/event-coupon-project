@@ -1,9 +1,10 @@
 package com.plusproject.domain.coupon.controller;
 
-import com.plusproject.common.annotation.AdminOnly;
+import com.plusproject.common.annotation.Access;
 import com.plusproject.common.dto.ApiResponse;
 import com.plusproject.domain.coupon.dto.request.CreateCouponRequest;
 import com.plusproject.domain.coupon.service.CouponService;
+import com.plusproject.domain.user.enums.UserRole;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class CouponController {
 
     private final CouponService couponService;
 
-    @AdminOnly
+    @Access(UserRole.ADMIN)
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> createCoupon(@Valid @RequestBody CreateCouponRequest request) {
         couponService.createCoupon(request);

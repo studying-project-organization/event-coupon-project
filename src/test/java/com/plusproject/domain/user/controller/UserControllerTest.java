@@ -7,11 +7,10 @@ import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.user.dto.request.UpdateAdminRequest;
 import com.plusproject.domain.user.dto.request.UpdatePasswordRequest;
 import com.plusproject.domain.user.enums.UserRole;
-import com.plusproject.domain.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -22,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Transactional
 class UserControllerTest extends ControllerTestSupport {
 
     private static final String PATH = "/api/v1/users";
