@@ -2,8 +2,10 @@ import http from 'k6/http';
 import { sleep, check } from 'k6';
 
 export const options = {
-    vus: 1000,                   // Virtual User
-    duration: '30s',            // 지속 시간
+    stages: [
+        { duration: '10s', target: 2000 },
+        { duration: '80s', target: 2000 },
+    ]
 };
 
 let token;

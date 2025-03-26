@@ -8,6 +8,9 @@ import static org.springframework.http.HttpStatus.*;
 @Getter
 public enum ErrorCode {
 
+    // A
+    ACQUISITION_FAILED_LOCK(CONFLICT, "락을 획득하지 못했습니다. 잠시 후 다시 시도해주세요."),
+
     // D
     DUPLICATE_EMAIL(CONFLICT, "이미 가입되어있는 이메일 입니다."),
     DUPLICATE_COUPON_ISSUANCE(CONFLICT, "이미 발급받은 쿠폰입니다."),

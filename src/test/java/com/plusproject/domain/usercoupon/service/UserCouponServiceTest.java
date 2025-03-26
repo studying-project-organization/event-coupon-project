@@ -114,7 +114,7 @@ class UserCouponServiceTest extends SpringBootTestSupport {
                 coupon.getName(),
                 coupon.getDescription(),
                 coupon.getDiscountAmount(),
-                coupon.getQuantity()
+                coupon.getQuantity() - 1
             );
     }
 

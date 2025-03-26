@@ -23,9 +23,12 @@ import java.util.Map;
 public class JwtFilter implements Filter {
 
     private static final Map<String, String[]> WHITE_LIST = Map.of(
+        "GET", new String[] {
+            "/test-redis"
+        },
         "POST", new String[]{
             "/api/v1/auth/signup",
-            "/api/v1/auth/signin"
+            "/api/v1/auth/signin",
         }
     );
 
