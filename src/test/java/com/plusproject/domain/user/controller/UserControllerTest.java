@@ -7,9 +7,11 @@ import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.user.dto.request.UpdateAdminRequest;
 import com.plusproject.domain.user.dto.request.UpdatePasswordRequest;
 import com.plusproject.domain.user.enums.UserRole;
+import com.plusproject.domain.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;

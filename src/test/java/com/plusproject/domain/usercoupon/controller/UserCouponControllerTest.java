@@ -6,11 +6,11 @@ import com.plusproject.common.exception.ApplicationException;
 import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.user.enums.UserRole;
 import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
+import com.plusproject.domain.usercoupon.service.UserCouponService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -31,7 +31,6 @@ class UserCouponControllerTest extends ControllerTestSupport {
     void setUp() {
         accessToken = jwtUtil.createAccessToken(1L, UserRole.ADMIN);
     }
-
 
     @Test
     @DisplayName("쿠폰 발급하기 - 성공")
