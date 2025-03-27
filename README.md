@@ -396,3 +396,65 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 매우 준수한 결과를 나타낸것 같다.
 목표로 하였던 데이터 무결성을 지켜내었기에 만족스러운 결과이다.
+
+***
+
+## 동시성 이슈 해결 - Redisson 사용
+
+- `Lettuce`가 아닌 `Redisson`을 사용한 이유
+  - `Lettuce`는 일단... 내가 직접 스핀락을 사용하여, 락을 가지고 있는 시간, 재시도 시간 등을 설정해주었어야 하고, 우선순위 개념이 없어서 우선순위에 대한 기능도 구현해주어야 한다는 귀찮은? 단점이 있다.
+  - 그리고 성능 자체도 내가 구현한 것보다 `Redisson`이 내부적으로 락을 놓을 정확한 시간을 계산 해준다는점에 훨씬 이점이 있었다.
+  - `Redisson`은 명확하게 메서드로 `FairLock(공정한 락)`을 꺼내쓸 수 있었고, `tryLock`으로 재시도할 시간도 정해줄 수 있어서 구현하기 훨씬 편했다.
+  - `Lettuce`로 구현했을때는 우선순위 기능 구현이 안되어있어서, 빨리 쿠폰 발급을 누른 유저가 오래 기다려서 결국 락 획득을 실패해서 쿠폰 발급 자체를 받지 못하는 문제도 자주는 아니지만 발생하긴 했다.
+
+그럼 이제 어느정도의 성능 차이가 있는지 테스트 결과를 통해 비교해보자
+
+#### 테스트 조건
+
+- k6 를 사용하였고 10초 동안 점진적으로 가상유저를 2,000명 까지 증가시켰다.
+- 그 후에 80초 동안 2,000 명의 가상유저로 계속해서 요청을 시도하였다.
+- `coupons` 테이블에 `quantity`는 동일하게 50,000 개의 수량으로 시작하였다.
+
+![Image](https://github.com/user-attachments/assets/b0bcdfd0-3a98-4be1-bbfd-b3698d7e36ed)
+
+- `50,000` 개의 쿠폰을 모두 발급 받은 것을 확인할 수 있었다.
+
+```
+INFO[0093] Failed: 400 - {"status":"BAD_REQUEST","code":400,"message":"쿠폰이 모두 소진되었습니다.","timestamp":"2025-03-27T10:19:49.19443"}  source=console                                                                        
+INFO[0093] Failed: 400 - {"status":"BAD_REQUEST","code":400,"message":"쿠폰이 모두 소진되었습니다.","timestamp":"2025-03-27T10:19:49.1959415"}  source=console
+INFO[0093] Failed: 400 - {"status":"BAD_REQUEST","code":400,"message":"쿠폰이 모두 소진되었습니다.","timestamp":"2025-03-27T10:19:49.1975093"}  source=console                                                                      
+INFO[0093] Failed: 400 - {"status":"BAD_REQUEST","code":400,"message":"쿠폰이 모두 소진되었습니다.","timestamp":"2025-03-27T10:19:49.1985737"}  source=console     
+
+     ✗ status is 200
+      ↳  94% — ✓ 50000 / ✗ 3146
+
+     █ setup
+
+       ✓ login success
+
+     checks.........................: 94.08% 50001 out of 53147
+     data_received..................: 12 MB  123 kB/s
+     data_sent......................: 20 MB  220 kB/s
+     http_req_blocked...............: avg=5.1µs   min=0s     med=0s    max=1.88ms p(90)=0s       p(95)=0s
+     http_req_connecting............: avg=3.85µs  min=0s     med=0s    max=1.88ms p(90)=0s       p(95)=0s
+     http_req_duration..............: avg=2.24s   min=2.03ms med=2.4s  max=12.54s p(90)=2.6s     p(95)=2.63s
+       { expected_response:true }...: avg=2.26s   min=2.03ms med=2.41s max=3.56s  p(90)=2.6s     p(95)=2.63s
+     http_req_failed................: 5.91%  3146 out of 53147
+     http_req_receiving.............: avg=121.6µs min=0s     med=0s    max=6.04ms p(90)=509.49µs p(95)=631.13µs
+     http_req_sending...............: avg=3.01µs  min=0s     med=0s    max=1ms    p(90)=0s       p(95)=0s
+     http_req_tls_handshaking.......: avg=0s      min=0s     med=0s    max=0s     p(90)=0s       p(95)=0s
+     http_req_waiting...............: avg=2.24s   min=2.03ms med=2.4s  max=12.54s p(90)=2.6s     p(95)=2.63s
+     http_reqs......................: 53147  571.601529/s
+     iteration_duration.............: avg=3.24s   min=1s     med=3.4s  max=13.54s p(90)=3.6s     p(95)=3.63s
+     iterations.....................: 53146  571.590774/s
+     vus............................: 37     min=37             max=2000
+     vus_max........................: 2000   min=2000           max=2000
+
+                                                                                                                                                                                                                                    
+running (1m33.0s), 0000/2000 VUs, 53146 complete and 0 interrupted iterations                                                                                                                                                       
+default ✓ [======================================] 0000/2000 VUs  1m30s          
+```
+
+- k6 콘솔 결과를 확인해보면, 쿠폰이 모두 소진되었음을 제외한 예외는 발생하지 않았으며, 모두 소진했을때 발생한 예외를 제외하면 100%의 성공률을 보여준다.
+- 심지어 초당 요청 처리도 약 571건으로 `Lettuce`를 사용하여 내가 직접 로직을 구현했을때 보다 성능이 비약적으로 상승했다.
+- 구현도 `Lettuce` 보다 간단하고 성능도 좋은 `Redisson`을 쓰지 않을 이유가 있을까?
