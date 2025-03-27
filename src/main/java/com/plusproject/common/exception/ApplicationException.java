@@ -13,7 +13,7 @@ public class ApplicationException extends RuntimeException {
     }
 
     public ApplicationException(ErrorCode errorCode, String message) {
-        super(message);
+        super(errorCode.getMessage() + message);
         this.status = errorCode.getHttpStatus();
     }
 

@@ -396,3 +396,82 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 매우 준수한 결과를 나타낸것 같다.
 목표로 하였던 데이터 무결성을 지켜내었기에 만족스러운 결과이다.
+
+***
+
+## 동시성 이슈 해결 - Redisson 사용
+
+### `Lettuce`가 아닌 `Redisson`을 사용한 이유
+
+기존에 사용한 `Lettuce`는 `Redis Lock` 구현 시, 내가 직접 스핀락을 만들어 락 획득 시도 시간, 락 보유 시간, 재시도 로직 등을 모두 수동으로 작성해야 했으며, 우선순위(FIFO) 기능이 없어 락을 공정하게 분배하기 어려운 문제가 있었다.
+
+반면, `Redisson`은 명확하게 `FairLock(공정 락)`을 제공해 주어 먼저 요청한 유저가 우선적으로 락을 획득할 수 있게 해주며, 또한 락 획득 시 재시도(tryLock)를 위한 대기 시간(waitTime) 및 락의 자동 해제 시간(leaseTime)을 API 레벨에서 직접 설정할 수 있어 구현이 간단하고 직관적이었다.
+
+성능 측면에서도, 직접 구현한 `Lettuce` 기반의 스핀락 로직보다 내부적으로 최적화된 `Redisson`이 더 높은 초당 처리량과 낮은 응답 지연을 보여주었다. 특히 대량의 요청이 동시에 몰리는 이벤트성 쿠폰 발급의 경우, `Redisson`이 더 적합한 선택이었다.
+
+또한 `Lettuce`를 이용해 구현했을 때는 락 획득을 위한 우선순위가 없었기 때문에, 빠르게 쿠폰 발급 버튼을 누른 유저가 대기 큐에 밀려 쿠폰 획득 자체를 실패하는 상황이 간헐적으로 발생했지만, `Redisson FairLock`과 그 안에서 `재시도(Retry/Backoff)` 전략을 사용한 이후로는 거의 발생하지 않았다.
+
+그럼 이제 어느정도의 성능 차이가 있는지 테스트 결과를 통해 비교해보자
+
+### 성능 테스트 및 비교 (Redisson 적용)
+
+#### 테스트 조건
+
+- k6를 이용해 10초 동안 가상 유저를 점진적으로 2,000명까지 증가시킨 후,
+이후 80초 동안 2,000명의 가상 유저가 계속 요청을 보내도록 설정하였다.
+
+- coupons 테이블의 쿠폰 수량은 100,000개로 설정하여 테스트를 진행하였다.
+
+```
+scenarios: (100.00%) 1 scenario, 2000 max VUs, 2m0s max duration (incl. graceful stop):
+* default: Up to 2000 looping VUs for 1m30s over 2 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+
+     ✓ status is 200
+
+     █ setup
+
+       ✓ login success
+
+     checks.........................: 100.00% 51902 out of 51902
+     data_received..................: 11 MB   106 kB/s
+     data_sent......................: 20 MB   192 kB/s
+     http_req_blocked...............: avg=6.68µs   min=0s     med=0s    max=26.09ms p(90)=0s      p(95)=0s
+     http_req_connecting............: avg=5.15µs   min=0s     med=0s    max=25.09ms p(90)=0s      p(95)=0s
+     http_req_duration..............: avg=2.34s    min=2.66ms med=2.49s max=12.86s  p(90)=2.66s   p(95)=2.68s
+       { expected_response:true }...: avg=2.34s    min=2.66ms med=2.49s max=12.86s  p(90)=2.66s   p(95)=2.68s
+     http_req_failed................: 0.00%   0 out of 51902
+     http_req_receiving.............: avg=132.57µs min=0s     med=0s    max=5.09ms  p(90)=513.5µs p(95)=666.89µs
+     http_req_sending...............: avg=3.12µs   min=0s     med=0s    max=3.18ms  p(90)=0s      p(95)=0s
+     http_req_tls_handshaking.......: avg=0s       min=0s     med=0s    max=0s      p(90)=0s      p(95)=0s
+     http_req_waiting...............: avg=2.34s    min=2.53ms med=2.49s max=12.86s  p(90)=2.66s   p(95)=2.68s
+     http_reqs......................: 51902   500.857266/s
+     iteration_duration.............: avg=3.34s    min=1s     med=3.49s max=13.86s  p(90)=3.66s   p(95)=3.68s
+     iterations.....................: 51901   500.847616/s
+     vus............................: 1       min=1              max=2000
+     vus_max........................: 2000    min=2000           max=2000
+
+                                                                                                                                                                                                                                    
+running (1m43.6s), 0000/2000 VUs, 51901 complete and 0 interrupted iterations                                                                                                                                                       
+default ✓ [======================================] 0000/2000 VUs  1m30s                
+```
+
+### DB 데이터 결과
+![Image](https://github.com/user-attachments/assets/dc28774f-6d92-4a97-8e7e-a015c0b7f814)
+
+- 쿠폰 `100,000`개 중에서 발급 성공한 `51,901`개를 빼면 남은 수량 `48,099`개로 데이터 무결성이 지켜졌다.
+- 초당 처리 가능한 요청도 약 500 개 정도로 `Lettuce`를 이용한 직접 구현에 비해 성능이 크게 향상되었다.
+- `응답 지연(p95)`도 4초 이내로 안정적인 응답 속도를 보여주었다.
+
+### 결론
+
+최종적으로 Redisson FairLock + 재시도(Retry/Backoff) 전략을 통해:
+
+- 쿠폰 발급의 데이터 무결성 보장 (과발급 문제 완전 해결)
+- 락 충돌(409 Conflict) 문제 최소화 (거의 발생하지 않음)
+- 높은 처리량 및 안정적인 응답 속도 확보
+- 간결하고 직관적인 코드 구현
+
+의 네 가지 핵심 목표를 성공적으로 달성했다.
+
+단, 이벤트 참여자의 절대적인 FIFO 순서를 반드시 보장해야 하는 비즈니스 상황이라면, 현재의 재시도 방식은 대기 순번을 다시 뒤로 밀리게 하므로, 쿠폰 수량 내에 신청했던 유저 중 일부가 받지 못하는 가능성이 있다. 따라서, 이 부분에 대한 추가적인 전략이나 보완책이 필요할 수 있다는 점도 확인했다.
