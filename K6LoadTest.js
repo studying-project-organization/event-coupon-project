@@ -8,6 +8,8 @@ export const options = {
     ]
 };
 
+const redissonUrl = 'http://localhost:8080/api/v1/user-coupon';
+const mysqlUrl = "http://localhost:8080/api/v1/user-coupon/mysql";
 let token;
 
 export function setup() {
@@ -29,7 +31,7 @@ export default function (data) {
         'Authorization': `${data.token}`,
     };
 
-    const res = http.post('http://localhost:8080/api/v1/user-coupon', payload, { headers });
+    const res = http.post(mysqlUrl, payload, { headers });
     check(res, { 'status is 200': (r) => r.status === 200 });
     sleep(1);
 

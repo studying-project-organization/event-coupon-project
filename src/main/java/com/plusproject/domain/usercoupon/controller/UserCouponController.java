@@ -29,6 +29,15 @@ public class UserCouponController {
         return ResponseEntity.ok(ApiResponse.success("쿠폰 발급에 성공했습니다."));
     }
 
+    @PostMapping("/mysql")
+    public ResponseEntity<ApiResponse<Void>> issuedCouponByMySQL(
+        @Auth AuthUser authUser,
+        @Valid @RequestBody IssuedCouponRequest request
+    ) {
+        userCouponService.issuedCouponByMySQL(authUser, request);
+        return ResponseEntity.ok(ApiResponse.success("쿠폰 발급에 성공했습니다."));
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserCouponResponse>>> findAllUserCoupon(
         @Auth AuthUser authUser

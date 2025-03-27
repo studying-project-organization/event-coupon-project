@@ -75,6 +75,26 @@ public class UserCouponService {
         }
     }
 
+    @Transactional
+    public Long issuedCouponByMySQL(AuthUser authUser, IssuedCouponRequest request) {
+        // 1) 비관적 락이 걸림
+        Coupon findCoupon = couponRepository.findByIdForUpdateOrElseThrow(request.getCouponId());
+        User findUser = userRepository.findByIdOrElseThrow(authUser.getId(), ErrorCode.NOT_FOUND_USER);
+
+        int quantityResult = couponRepository.decrementQuantity(request.getCouponId());
+        if (quantityResult == 0) {
+            throw new ApplicationException(ErrorCode.EXHAUSETD_COUPON);
+        }
+
+        UserCoupon newUserCoupon = UserCoupon.builder()
+            .user(findUser)
+            .coupon(findCoupon)
+            .status(CouponStatus.ISSUED)
+            .build();
+
+        return userCouponRepository.save(newUserCoupon).getId();
+    }
+
     public List<UserCouponResponse> findAllUserCoupon(AuthUser authUser) {
         return userCouponRepository.findAllByUser_Id(authUser.getId())
             .stream()
