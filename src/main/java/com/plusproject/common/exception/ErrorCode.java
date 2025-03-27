@@ -43,6 +43,7 @@ public enum ErrorCode {
 
     // R
     REQUIRED_JWT_TOKEN(BAD_REQUEST, "JWT 토큰이 필요합니다."),
+    REQUEST_TIMEOUT(HttpStatus.REQUEST_TIMEOUT, "서버응답시간이 초과되었습니다."),
 
     // S
     SAME_AS_OLD_PASSWORD(CONFLICT, "기존 비밀번호와 새 비밀번호가 같습니다."),

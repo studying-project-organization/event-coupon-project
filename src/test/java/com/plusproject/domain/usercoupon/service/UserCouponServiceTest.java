@@ -24,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,21 +63,21 @@ class UserCouponServiceTest extends SpringBootTestSupport {
     @BeforeEach
     void setUp() {
         user = User.builder()
-            .email("test@example.com")
-            .password("Password1234!")
-            .nickname("찌호")
-            .address("서울")
-            .userRole(UserRole.ADMIN)
-            .build();
+                .email("test@example.com")
+                .password("Password1234!")
+                .nickname("찌호")
+                .address("서울")
+                .userRole(UserRole.ADMIN)
+                .build();
 
         coupon = Coupon.builder()
-            .name("쿠폰 이름")
-            .description("쿠폰 설명")
-            .discountAmount(1000)
-            .quantity(10000)
-            .startDate(LocalDateTime.now())
-            .endDate(LocalDateTime.now().plusDays(7))
-            .build();
+                .name("쿠폰 이름")
+                .description("쿠폰 설명")
+                .discountAmount(1000)
+                .quantity(10000)
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusDays(7))
+                .build();
 
         userRepository.save(user);
         couponRepository.save(coupon);
@@ -81,11 +85,9 @@ class UserCouponServiceTest extends SpringBootTestSupport {
         em.flush();
 
         authUser = AuthUser.builder()
-            .id(user.getId())
-            .userRole(user.getUserRole())
-            .build();
-
-        em.clear();
+                .id(user.getId())
+                .userRole(user.getUserRole())
+                .build();
     }
 
     @Test
@@ -93,8 +95,8 @@ class UserCouponServiceTest extends SpringBootTestSupport {
     void issuedCoupon1() throws Exception {
         // given
         IssuedCouponRequest request = IssuedCouponRequest.builder()
-            .couponId(coupon.getId())
-            .build();
+                .couponId(coupon.getId())
+                .build();
 
         // when
         Long userCouponId = userCouponService.issuedCoupon(authUser, request);
@@ -102,22 +104,59 @@ class UserCouponServiceTest extends SpringBootTestSupport {
 
         // then
         assertThat(findUserCoupon)
-            .extracting("id", "status")
-            .containsExactly(userCouponId, CouponStatus.ISSUED);
+                .extracting("id", "status")
+                .containsExactly(userCouponId, CouponStatus.ISSUED);
 
         assertThat(findUserCoupon.getUser())
-            .extracting("id", "email", "nickname", "userRole")
-            .containsExactly(user.getId(), user.getEmail(), user.getNickname(), user.getUserRole());
+                .extracting("id", "email", "nickname", "userRole")
+                .containsExactly(user.getId(), user.getEmail(), user.getNickname(), user.getUserRole());
 
         assertThat(findUserCoupon.getCoupon())
-            .extracting("id", "name", "description", "discountAmount", "quantity")
-            .containsExactly(
-                coupon.getId(),
-                coupon.getName(),
-                coupon.getDescription(),
-                coupon.getDiscountAmount(),
-                coupon.getQuantity()
-            );
+                .extracting("id", "name", "description", "discountAmount", "quantity")
+                .containsExactly(
+                        coupon.getId(),
+                        coupon.getName(),
+                        coupon.getDescription(),
+                        coupon.getDiscountAmount(),
+                        coupon.getQuantity()
+                );
+    }
+
+    @Test
+    @DisplayName("동시성 이슈 검증 - 쿠폰 발급 시 수량 감소")
+    void testConcurrentCouponIssuance() throws InterruptedException {
+        //given
+        IssuedCouponRequest req = IssuedCouponRequest.builder()
+                .couponId(coupon.getId())
+                .build();
+
+        int concurrentRequests = 10;
+        ExecutorService executorService = Executors.newFixedThreadPool(concurrentRequests);
+        CountDownLatch latch = new CountDownLatch(concurrentRequests);
+        AtomicInteger successfulUpdates = new AtomicInteger(0);
+
+        // when
+        for (int i = 0; i < concurrentRequests; i++) {
+            executorService.submit(() -> {
+                try {
+                    userCouponService.issuedCoupon(authUser, req);
+                    successfulUpdates.incrementAndGet();
+                } catch (Exception e) {
+                    System.out.println("! 충돌발생 : " + e.getMessage());
+                }finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await(); //스레드가 완료되기까지 기다림
+        executorService.shutdown();
+
+        System.out.println("성공한 업데이트 수: " + successfulUpdates.get());
+
+        // then
+        Integer updatedCoupons = coupon.getQuantity();
+        assertThat(updatedCoupons).isEqualTo(10000-concurrentRequests);
     }
 
     @Test

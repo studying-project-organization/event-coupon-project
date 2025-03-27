@@ -24,7 +24,7 @@ public class UserCouponController {
     public ResponseEntity<ApiResponse<Void>> issuedCoupon(
         @Auth AuthUser authUser,
         @Valid @RequestBody IssuedCouponRequest request
-    ) {
+    ) throws InterruptedException {
         userCouponService.issuedCoupon(authUser, request);
         return ResponseEntity.ok(ApiResponse.success("쿠폰 발급에 성공했습니다."));
     }

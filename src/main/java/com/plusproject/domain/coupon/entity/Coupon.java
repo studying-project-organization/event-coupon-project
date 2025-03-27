@@ -49,4 +49,7 @@ public class Coupon extends BaseEntity {
         this.endDate = endDate;
     }
 
+    public Integer decreaseQuantity() {
+        return --quantity;
+    }
 }
