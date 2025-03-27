@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     // A
-
+    ACQUISITION_FAILED_LOCK(CONFLICT, "락 획득에 실패했습니다."),
     // C
 
     // D

@@ -3,8 +3,13 @@ import {sleep, check} from 'k6';
 
 // 테스트 옵션 설정
 export const options = {
-    vus: 500, // 가상 유저 수
-    duration: '20s', // 테스트 지속 시간
+/*    vus: 200, // 가상 유저 수
+    duration: '20s', // 테스트 지속 시간*/
+
+    stages: [
+        { duration: '10s', target: 2000 },
+        { duration: '30s', target: 2000 },
+    ]
 };
 
 // JWT 토큰
@@ -26,7 +31,7 @@ export function setup() {
 export default function (data) {
     // 요청 페이로드
     const payload = JSON.stringify({
-        couponId: 1, // 테스트용 couponId
+        couponId: 2, // 테스트용 couponId
     });
     
     // Autorization 위한 Token headers에 삽입
