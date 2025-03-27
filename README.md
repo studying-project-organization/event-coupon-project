@@ -426,6 +426,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 scenarios: (100.00%) 1 scenario, 2000 max VUs, 2m0s max duration (incl. graceful stop):
 * default: Up to 2000 looping VUs for 1m30s over 2 stages (gracefulRampDown: 30s, gracefulStop: 30s)
 
+
      ✓ status is 200
 
      █ setup
