@@ -10,6 +10,6 @@ public interface CouponRepository extends BaseRepository<Coupon, Long> {
 
     @Modifying
     @Query("update Coupon c set c.quantity = c.quantity - 1 where c.id = :couponId and c.quantity > 0")
-    void decrementQuantity(@Param("couponId") Long couponId);
+    int decrementQuantity(@Param("couponId") Long couponId);
 
 }
