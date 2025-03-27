@@ -11,30 +11,27 @@ import org.springframework.stereotype.Repository;
 public class RedisLettuceRepository {
 
     private final RedisTemplate<String, String> redisTemplate;
-    private static final long LOCK_TIMEOUT_SECONDS = 5;
-    private static final long RETRY_TIMEOUT_MILLIS = 10_000;
-    private static final long RETRY_DELAY_MILLIS = 100;
 
     // 락 획득 시도
-    public String acquireLock(String key) throws InterruptedException {
+    public String acquireLock(String key, long waitTimeMillis, long lockTimeSeconds) throws InterruptedException {
         String value = UUID.randomUUID().toString();
-        long deadline = System.currentTimeMillis() + RETRY_TIMEOUT_MILLIS;
+        long deadline = System.currentTimeMillis() + waitTimeMillis;
 
         while (System.currentTimeMillis() < deadline) {
             Boolean success = redisTemplate.opsForValue().setIfAbsent(
                     key,
                     value,
-                    Duration.ofSeconds(LOCK_TIMEOUT_SECONDS)
+                    Duration.ofSeconds(lockTimeSeconds)
             );
 
             if (Boolean.TRUE.equals(success)) {
-                return value;                   // 락 획득 성공
+                return value; // 락 획득 성공
             }
 
-            Thread.sleep(RETRY_DELAY_MILLIS);   // 100ms 대기 후 재시도
+            Thread.sleep(100); // 100ms 대기 후 재시도
         }
 
-        return null;
+        return null; // 락 획득 실패
     }
 
     // 락 해제

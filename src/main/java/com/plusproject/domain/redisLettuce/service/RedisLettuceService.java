@@ -1,8 +1,5 @@
 package com.plusproject.domain.redisLettuce.service;
 
-import com.plusproject.common.exception.ApplicationException;
-import com.plusproject.common.exception.ErrorCode;
-import com.plusproject.domain.redisLettuce.repository.RedisLettuceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +7,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RedisLettuceService {
 
-    private final RedisLettuceRepository redisLettuceRepository;
+    /*private final RedisLettuceRepository redisLettuceRepository;
 
     private static final String LOCK_PREFIX = "lock:coupon:";
 
@@ -28,5 +25,5 @@ public class RedisLettuceService {
         } finally {
             redisLettuceRepository.releaseLock(newKey, value);
         }
-    }
+    }*/
 }
