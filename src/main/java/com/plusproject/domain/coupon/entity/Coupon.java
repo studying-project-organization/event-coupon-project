@@ -1,7 +1,6 @@
 package com.plusproject.domain.coupon.entity;
 
 import com.plusproject.common.entity.BaseEntity;
-import com.plusproject.domain.coupon.dto.request.CreateCouponRequest;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -49,4 +48,7 @@ public class Coupon extends BaseEntity {
         this.endDate = endDate;
     }
 
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
 }
