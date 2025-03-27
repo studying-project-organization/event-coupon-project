@@ -426,7 +426,6 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 scenarios: (100.00%) 1 scenario, 2000 max VUs, 2m0s max duration (incl. graceful stop):
 * default: Up to 2000 looping VUs for 1m30s over 2 stages (gracefulRampDown: 30s, gracefulStop: 30s)
 
-
      ✓ status is 200
 
      █ setup
@@ -453,11 +452,12 @@ scenarios: (100.00%) 1 scenario, 2000 max VUs, 2m0s max duration (incl. graceful
 
                                                                                                                                                                                                                                     
 running (1m43.6s), 0000/2000 VUs, 51901 complete and 0 interrupted iterations                                                                                                                                                       
-default ✓ [======================================] 0000/2000 VUs  1m30s                
+default ✓ [======================================] 0000/2000 VUs  1m30s                    
 ```
 
 ### DB 데이터 결과
-![Image](https://github.com/user-attachments/assets/dc28774f-6d92-4a97-8e7e-a015c0b7f814)
+
+![Image](https://github.com/user-attachments/assets/eee74a11-d3d0-447e-a24f-4ec8b70cac46)
 
 - 쿠폰 `100,000`개 중에서 발급 성공한 `51,901`개를 빼면 남은 수량 `48,099`개로 데이터 무결성이 지켜졌다.
 - 초당 처리 가능한 요청도 약 500 개 정도로 `Lettuce`를 이용한 직접 구현에 비해 성능이 크게 향상되었다.
