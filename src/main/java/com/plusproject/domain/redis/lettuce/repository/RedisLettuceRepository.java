@@ -1,4 +1,4 @@
-package com.plusproject.domain.redisLettuce.repository;
+package com.plusproject.domain.redis.lettuce.repository;
 
 import java.time.Duration;
 import java.util.UUID;

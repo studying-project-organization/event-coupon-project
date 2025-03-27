@@ -1,7 +1,7 @@
 package com.plusproject.domain.usercoupon.controller;
 
 import com.plusproject.common.annotation.Auth;
-import com.plusproject.common.annotation.DistributedLock;
+import com.plusproject.common.annotation.RedissonDistributedLock;
 import com.plusproject.common.dto.ApiResponse;
 import com.plusproject.common.dto.AuthUser;
 import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
@@ -25,7 +25,7 @@ public class UserCouponController {
     private final UserCouponService userCouponService;
 
     @PostMapping
-    @DistributedLock(key = "#request.couponId", waitTime = 10000, lockTime = 5000)
+    @RedissonDistributedLock(key = "#request.couponId")
     public ResponseEntity<ApiResponse<Void>> issuedCoupon(
         @Auth AuthUser authUser,
         @Valid @RequestBody IssuedCouponRequest request

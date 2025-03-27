@@ -79,7 +79,7 @@ SELECT COUNT(*) FROM user_coupon
 ## Redis Lettuce
 
 ### Lettuce 구현
-[RedisLettuceService](src/main/java/com/plusproject/domain/redisLettuce/service/RedisLettuceService.java), [RedisLettuceRepository](src/main/java/com/plusproject/domain/redisLettuce/repository/RedisLettuceRepository.java)
+[RedisLettuceService](src/main/java/com/plusproject/domain/redis/service/RedisLettuceService.java), [RedisLettuceRepository](src/main/java/com/plusproject/domain/redis/repository/RedisLettuceRepository.java)
 
 - 먼저 레디스를 도커를 통해 실행시켜주었다.
 - acquireLock -> lock 획득을 시도하는 메서드
@@ -215,6 +215,245 @@ SELECT COUNT(*) FROM user_coupon
 
 다음과 같이 2567개가 남아있다.(설정 수량은 10000개 이다.)
 10000 - 2567 = 7433이므로, 동시성 처리가 제대로 된 것을 확인할 수 있다.
+
+---
+
+## Redisson을 이용한 Lock 구현
+
+### 구현 위치
+[RedissonDistributedLock](src/main/java/com/plusproject/common/annotation/RedissonDistributedLock.java)
+[RedissonDistributedLockAspect](src/main/java/com/plusproject/common/aop/RedissonDistributedLockAspect.java)
+
+### 내용
+- 위 AOP 구현에 추가적으로 Redisson을 사용하여 구현하였다.
+- Redisson을 사용하는 이유
+  - 분산 lock 구현이 쉽다.
+    - Lettuce는 분산 lock을 직접 구현해 주어야 한다.
+    - 하지만 Redisson은 RLock 인터페이스틀 통해 분산 lock을 제공한다.
+  - FairLock을 제공한다
+    - 동시성 처리에서 특정 상황에서의 중요한 부분은 바로 순서 보장이다.
+    - Lock을 받고 동시성 처리가 가능해도, 순서가 보장이 되지 않는다면, 이는 비즈니스적 관점에서는 크나큰 문제점이 된다.
+    - 하지만 FairLock을 사용한다면 위 문제점을 해결할 수 있다.
+    - FairLock은 Lcok을 요청한 순서대로 클라이언트가 Lock을 획득할 수 있도록 보장해준다.
+    - 따라서 동시성 처리 및 순서 보장까지 가능하기 때문에 매우 장점이 될 수 있다.
+
+### 결과
+```
+  █ TOTAL RESULTS
+
+    checks_total.......................: 7913   153.787675/s
+    checks_succeeded...................: 97.49% 7715 out of 7913
+    checks_failed......................: 2.50%  198 out of 7913
+
+    ✓ login success
+    ✗ status is 200
+      ↳  97% — ✓ 7714 / ✗ 198
+
+    HTTP
+    http_req_duration.......................................................: avg=9.14s  min=134.63ms med=10.09s max=20.21s p(90)=11.88s p(95)=12.06s
+      { expected_response:true }............................................: avg=8.86s  min=134.63ms med=10.08s max=13.29s p(90)=11.84s p(95)=11.98s
+    http_req_failed.........................................................: 2.50%  198 out of 7913
+    http_reqs...............................................................: 7913   153.787675/s
+
+    EXECUTION
+    iteration_duration......................................................: avg=10.14s min=1.13s    med=11.09s max=21.44s p(90)=12.88s p(95)=13.06s
+    iterations..............................................................: 7912   153.76824/s
+    vus.....................................................................: 92     min=92          max=2000
+    vus_max.................................................................: 2000   min=2000        max=2000
+
+    NETWORK
+    data_received...........................................................: 1.7 MB 33 kB/s
+    data_sent...............................................................: 2.7 MB 53 kB/s
+
+```
+다음과 같이 총 7913개의 시도중 7714개가 성공하고 198개는 실패하였다.
+실패한 이유는 lock을 획득하기 위해 기다리는 시간을 10초로 설정하였는데, 해당 시간을 넘어가 lock 획득에 실패하여 에러가 발생하였기 때문이다.
+따라서 성공한 7714개가 제대로 성공했는지 확인해보고자 한다.
+발급 된 쿠폰의 개수를
+```sql
+SELECT COUNT(*) FROM user_coupon
+```
+통해 확인해보면,
+
+![img.png](img/4.Redisson적용.png)
+
+와 같이 7714개가 동일하게 발급된 것을 알 수 있다.
+
+쿠폰 수량의 변화를 확인해보면,
+
+![img_1.png](img/4.Redisson적용2.png)
+
+다음과 같이 22286개가 남아있다.(설정 수량은 30000개 이다.)
+30000 - 22286 = 7714이므로, 동시성 처리가 제대로 된 것을 확인할 수 있다.
+
+---
+
+## 순서 보장 테스트
+
+### Lettuce를 사용한 테스트
+```
+2025-03-27T15:19:11.740+09:00  INFO 28484 --- [plus-project] [io-8080-exec-24] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 21bb
+2025-03-27T15:19:11.746+09:00  INFO 28484 --- [plus-project] [io-8080-exec-24] c.p.common.aop.DistributedLockAspect     : Lock released for key: 21bb
+2025-03-27T15:19:11.770+09:00  INFO 28484 --- [plus-project] [o-8080-exec-154] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2358
+2025-03-27T15:19:11.776+09:00  INFO 28484 --- [plus-project] [o-8080-exec-154] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2358
+2025-03-27T15:19:11.849+09:00  INFO 28484 --- [plus-project] [io-8080-exec-14] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2289
+2025-03-27T15:19:11.856+09:00  INFO 28484 --- [plus-project] [io-8080-exec-14] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2289
+2025-03-27T15:19:11.877+09:00  INFO 28484 --- [plus-project] [o-8080-exec-113] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2088
+2025-03-27T15:19:11.883+09:00  INFO 28484 --- [plus-project] [o-8080-exec-113] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2088
+2025-03-27T15:19:11.951+09:00  INFO 28484 --- [plus-project] [o-8080-exec-184] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 22c3
+2025-03-27T15:19:11.958+09:00  INFO 28484 --- [plus-project] [o-8080-exec-184] c.p.common.aop.DistributedLockAspect     : Lock released for key: 22c3
+2025-03-27T15:19:11.985+09:00  INFO 28484 --- [plus-project] [io-8080-exec-87] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2031
+2025-03-27T15:19:11.991+09:00  INFO 28484 --- [plus-project] [io-8080-exec-87] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2031
+2025-03-27T15:19:12.062+09:00  INFO 28484 --- [plus-project] [io-8080-exec-90] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2183
+2025-03-27T15:19:12.069+09:00  INFO 28484 --- [plus-project] [io-8080-exec-90] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2183
+2025-03-27T15:19:12.169+09:00  INFO 28484 --- [plus-project] [o-8080-exec-182] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2065
+2025-03-27T15:19:12.176+09:00  INFO 28484 --- [plus-project] [o-8080-exec-182] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2065
+2025-03-27T15:19:12.275+09:00  WARN 28484 --- [plus-project] [o-8080-exec-177] c.p.common.aop.DistributedLockAspect     : Failed to acquire lock for key: lock:coupon:#request.couponId
+2025-03-27T15:19:12.276+09:00  INFO 28484 --- [plus-project] [nio-8080-exec-1] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 22fe
+2025-03-27T15:19:12.283+09:00  INFO 28484 --- [plus-project] [nio-8080-exec-1] c.p.common.aop.DistributedLockAspect     : Lock released for key: 22fe
+2025-03-27T15:19:12.384+09:00  INFO 28484 --- [plus-project] [io-8080-exec-57] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 20ab
+2025-03-27T15:19:12.391+09:00  INFO 28484 --- [plus-project] [io-8080-exec-57] c.p.common.aop.DistributedLockAspect     : Lock released for key: 20ab
+2025-03-27T15:19:12.492+09:00  INFO 28484 --- [plus-project] [o-8080-exec-189] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 22de
+2025-03-27T15:19:12.498+09:00  INFO 28484 --- [plus-project] [o-8080-exec-189] c.p.common.aop.DistributedLockAspect     : Lock released for key: 22de
+2025-03-27T15:19:12.599+09:00  WARN 28484 --- [plus-project] [io-8080-exec-48] c.p.common.aop.DistributedLockAspect     : Failed to acquire lock for key: lock:coupon:#request.couponId
+2025-03-27T15:19:12.600+09:00  INFO 28484 --- [plus-project] [o-8080-exec-114] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 21f8
+2025-03-27T15:19:12.607+09:00  INFO 28484 --- [plus-project] [o-8080-exec-114] c.p.common.aop.DistributedLockAspect     : Lock released for key: 21f8
+2025-03-27T15:19:12.709+09:00  INFO 28484 --- [plus-project] [o-8080-exec-103] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 219a
+2025-03-27T15:19:12.715+09:00  INFO 28484 --- [plus-project] [o-8080-exec-103] c.p.common.aop.DistributedLockAspect     : Lock released for key: 219a
+2025-03-27T15:19:12.816+09:00  WARN 28484 --- [plus-project] [io-8080-exec-99] c.p.common.aop.DistributedLockAspect     : Failed to acquire lock for key: lock:coupon:#request.couponId
+2025-03-27T15:19:12.818+09:00  INFO 28484 --- [plus-project] [io-8080-exec-75] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2398
+2025-03-27T15:19:12.824+09:00  INFO 28484 --- [plus-project] [io-8080-exec-75] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2398
+2025-03-27T15:19:12.926+09:00  INFO 28484 --- [plus-project] [o-8080-exec-153] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2436
+2025-03-27T15:19:12.933+09:00  INFO 28484 --- [plus-project] [o-8080-exec-153] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2436
+2025-03-27T15:19:13.027+09:00  INFO 28484 --- [plus-project] [io-8080-exec-85] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 227b
+2025-03-27T15:19:13.034+09:00  INFO 28484 --- [plus-project] [io-8080-exec-85] c.p.common.aop.DistributedLockAspect     : Lock released for key: 227b
+2025-03-27T15:19:13.140+09:00  INFO 28484 --- [plus-project] [io-8080-exec-96] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2411
+2025-03-27T15:19:13.146+09:00  INFO 28484 --- [plus-project] [io-8080-exec-96] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2411
+2025-03-27T15:19:13.248+09:00  INFO 28484 --- [plus-project] [o-8080-exec-150] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2343
+2025-03-27T15:19:13.256+09:00  INFO 28484 --- [plus-project] [o-8080-exec-150] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2343
+2025-03-27T15:19:13.350+09:00  INFO 28484 --- [plus-project] [io-8080-exec-67] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 23f1
+2025-03-27T15:19:13.357+09:00  INFO 28484 --- [plus-project] [io-8080-exec-67] c.p.common.aop.DistributedLockAspect     : Lock released for key: 23f1
+2025-03-27T15:19:13.466+09:00  INFO 28484 --- [plus-project] [io-8080-exec-37] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2322
+2025-03-27T15:19:13.472+09:00  INFO 28484 --- [plus-project] [io-8080-exec-37] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2322
+2025-03-27T15:19:13.575+09:00  INFO 28484 --- [plus-project] [io-8080-exec-94] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2176
+2025-03-27T15:19:13.582+09:00  INFO 28484 --- [plus-project] [io-8080-exec-94] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2176
+2025-03-27T15:19:13.683+09:00  INFO 28484 --- [plus-project] [io-8080-exec-11] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 21af
+2025-03-27T15:19:13.690+09:00  INFO 28484 --- [plus-project] [io-8080-exec-11] c.p.common.aop.DistributedLockAspect     : Lock released for key: 21af
+2025-03-27T15:19:13.792+09:00  INFO 28484 --- [plus-project] [o-8080-exec-176] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 2330
+2025-03-27T15:19:13.799+09:00  INFO 28484 --- [plus-project] [o-8080-exec-176] c.p.common.aop.DistributedLockAspect     : Lock released for key: 2330
+```
+
+### Redisson을 사용한 테스트
+```
+2025-03-27T15:14:54.350+09:00  INFO 27928 --- [plus-project] [io-8080-exec-77] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2584
+2025-03-27T15:14:54.356+09:00  INFO 27928 --- [plus-project] [io-8080-exec-77] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2584
+2025-03-27T15:14:54.357+09:00  INFO 27928 --- [plus-project] [o-8080-exec-145] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2585
+2025-03-27T15:14:54.362+09:00  INFO 27928 --- [plus-project] [o-8080-exec-145] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2585
+2025-03-27T15:14:54.363+09:00  INFO 27928 --- [plus-project] [io-8080-exec-21] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2586
+2025-03-27T15:14:54.368+09:00  INFO 27928 --- [plus-project] [io-8080-exec-21] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2586
+2025-03-27T15:14:54.368+09:00  INFO 27928 --- [plus-project] [io-8080-exec-28] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2587
+2025-03-27T15:14:54.374+09:00  INFO 27928 --- [plus-project] [io-8080-exec-28] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2587
+2025-03-27T15:14:54.374+09:00  INFO 27928 --- [plus-project] [nio-8080-exec-8] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2588
+2025-03-27T15:14:54.379+09:00  INFO 27928 --- [plus-project] [nio-8080-exec-8] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2588
+2025-03-27T15:14:54.380+09:00  INFO 27928 --- [plus-project] [o-8080-exec-146] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2589
+2025-03-27T15:14:54.385+09:00  INFO 27928 --- [plus-project] [o-8080-exec-146] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2589
+2025-03-27T15:14:54.386+09:00  INFO 27928 --- [plus-project] [o-8080-exec-116] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 258a
+2025-03-27T15:14:54.391+09:00  INFO 27928 --- [plus-project] [o-8080-exec-116] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 258a
+2025-03-27T15:14:54.391+09:00  INFO 27928 --- [plus-project] [io-8080-exec-22] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 258b
+2025-03-27T15:14:54.396+09:00  INFO 27928 --- [plus-project] [io-8080-exec-22] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 258b
+2025-03-27T15:14:54.397+09:00  INFO 27928 --- [plus-project] [io-8080-exec-59] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 258c
+2025-03-27T15:14:54.402+09:00  INFO 27928 --- [plus-project] [io-8080-exec-59] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 258c
+2025-03-27T15:14:54.403+09:00  INFO 27928 --- [plus-project] [io-8080-exec-17] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 258d
+2025-03-27T15:14:54.408+09:00  INFO 27928 --- [plus-project] [io-8080-exec-17] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 258d
+2025-03-27T15:14:54.408+09:00  INFO 27928 --- [plus-project] [o-8080-exec-147] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 258e
+2025-03-27T15:14:54.413+09:00  INFO 27928 --- [plus-project] [o-8080-exec-147] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 258e
+2025-03-27T15:14:54.414+09:00  INFO 27928 --- [plus-project] [o-8080-exec-148] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 258f
+2025-03-27T15:14:54.419+09:00  INFO 27928 --- [plus-project] [o-8080-exec-148] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 258f
+2025-03-27T15:14:54.419+09:00  INFO 27928 --- [plus-project] [io-8080-exec-92] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2590
+2025-03-27T15:14:54.424+09:00  INFO 27928 --- [plus-project] [io-8080-exec-92] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2590
+2025-03-27T15:14:54.425+09:00  INFO 27928 --- [plus-project] [io-8080-exec-29] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2591
+2025-03-27T15:14:54.430+09:00  INFO 27928 --- [plus-project] [io-8080-exec-29] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2591
+2025-03-27T15:14:54.431+09:00  INFO 27928 --- [plus-project] [o-8080-exec-149] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2592
+2025-03-27T15:14:54.436+09:00  INFO 27928 --- [plus-project] [o-8080-exec-149] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2592
+2025-03-27T15:14:54.436+09:00  INFO 27928 --- [plus-project] [io-8080-exec-38] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2593
+2025-03-27T15:14:54.442+09:00  INFO 27928 --- [plus-project] [io-8080-exec-38] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2593
+2025-03-27T15:14:54.442+09:00  INFO 27928 --- [plus-project] [o-8080-exec-117] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2594
+2025-03-27T15:14:54.447+09:00  INFO 27928 --- [plus-project] [o-8080-exec-117] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2594
+2025-03-27T15:14:54.448+09:00  INFO 27928 --- [plus-project] [o-8080-exec-199] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2595
+2025-03-27T15:14:54.453+09:00  INFO 27928 --- [plus-project] [o-8080-exec-199] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2595
+2025-03-27T15:14:54.453+09:00  INFO 27928 --- [plus-project] [o-8080-exec-150] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2596
+2025-03-27T15:14:54.458+09:00  INFO 27928 --- [plus-project] [o-8080-exec-150] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2596
+2025-03-27T15:14:54.459+09:00  INFO 27928 --- [plus-project] [nio-8080-exec-5] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2597
+2025-03-27T15:14:54.464+09:00  INFO 27928 --- [plus-project] [nio-8080-exec-5] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2597
+2025-03-27T15:14:54.464+09:00  INFO 27928 --- [plus-project] [o-8080-exec-151] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2598
+2025-03-27T15:14:54.469+09:00  INFO 27928 --- [plus-project] [o-8080-exec-151] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2598
+```
+### Lettuce 사용 k6 테스트 결과
+```
+  █ TOTAL RESULTS                                                                                                                                                                                                               
+
+    checks_total.......................: 9277   141.463072/s
+    checks_succeeded...................: 92.82% 8611 out of 9277
+    checks_failed......................: 7.17%  666 out of 9277
+
+    ✓ login success
+    ✗ status is 200
+      ↳  92% — ✓ 8610 / ✗ 666
+
+    HTTP
+    http_req_duration.......................................................: avg=8.86s min=7ms med=9.23s  max=19.48s p(90)=13.53s p(95)=18.42s
+      { expected_response:true }............................................: avg=8.22s min=7ms med=9.22s  max=19.27s p(90)=9.87s  p(95)=13.01s
+    http_req_failed.........................................................: 7.17%  666 out of 9277
+    http_reqs...............................................................: 9277   141.463072/s
+
+    EXECUTION
+    iteration_duration......................................................: avg=9.86s min=1s  med=10.23s max=20.48s p(90)=14.53s p(95)=19.42s
+    iterations..............................................................: 9276   141.447824/s
+    vus.....................................................................: 7      min=7           max=1800
+    vus_max.................................................................: 1800   min=1800        max=1800
+
+    NETWORK
+    data_received...........................................................: 2.0 MB 30 kB/s
+    data_sent...............................................................: 3.7 MB 57 kB/s
+```
+### Redisson 사용 k6 테스트 결과
+```
+  █ TOTAL RESULTS
+
+    checks_total.......................: 9375   151.784877/s
+    checks_succeeded...................: 97.88% 9177 out of 9375
+    checks_failed......................: 2.11%  198 out of 9375
+
+    ✓ login success
+    ✗ status is 200
+      ↳  97% — ✓ 9176 / ✗ 198
+
+    HTTP
+    http_req_duration.......................................................: avg=8.76s min=124.76ms med=10.27s max=19.03s p(90)=10.85s p(95)=10.9s
+      { expected_response:true }............................................: avg=8.53s min=124.76ms med=10.26s max=12.19s p(90)=10.83s p(95)=10.87s
+    http_req_failed.........................................................: 2.11%  198 out of 9375
+    http_reqs...............................................................: 9375   151.784877/s
+
+    EXECUTION
+    iteration_duration......................................................: avg=9.76s min=1.12s    med=11.27s max=20.14s p(90)=11.85s p(95)=11.9s
+    iterations..............................................................: 9374   151.768687/s
+    vus.....................................................................: 141    min=108         max=1800
+    vus_max.................................................................: 1800   min=1800        max=1800
+
+    NETWORK
+    data_received...........................................................: 2.0 MB 32 kB/s
+    data_sent...............................................................: 3.8 MB 61 kB/s
+
+```
+
+### 결과
+- 보이는 것처럼 Lettuce를 사용했을 때의 로그와 같이 요청한 ID의 순서가 뒤죽박죽 섞여 실행되는 것을 알 수 있다.
+- 하지만 Redisson을 사용했을 경우, 로그와 같이 요청한 ID의 순서가 보장되어 실행되는 것을 알 수 있다.
+
+### 느낀점
+- 추가적으로, Redisson을 사용했을 경우 lock을 획득하지 못하여 발생하는 예외가 현저히 적은 것을 알 수 있었다.
+- 또한, 초당 요청 처리 건수도 Lettuce에 비해 Redisson이 약간이나마 높은 것을 알 수 있었다.
+- lock 획득에 실패하는 사용자들에 대하여 추가적인 처리를 해줄 수 있다면(ex : 대기열) 더욱 좋은 동시성 처리 및 순서 보장 처리가 될 것이라 생각 한다.
 
 ---
 
