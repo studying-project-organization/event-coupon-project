@@ -33,6 +33,8 @@ public enum ErrorCode {
     INVALID_ADMIN_ROLE_UPDATE(BAD_REQUEST, "같은 관리자의 권한은 수정할 수 없습니다."),
     INCORRECT_PASSWORD(UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
 
+    // L
+    LOCK_ACQUISITION_FAILED(BAD_REQUEST, "락획득에 실패하였습니다."),
     // M
     MISSING_JWT_TOKEN(BAD_REQUEST, "토큰이 요청에 포함되지 않았습니다."),
 
