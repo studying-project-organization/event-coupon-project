@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - jeontak/concurrency
+      - jeonjiho/ci-cd
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
