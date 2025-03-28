@@ -6,9 +6,9 @@ on:
       - jeonjiho/ci-cd
 
 env:
+  SPRING_DATASOURCE_HOST: db
   SPRING_REDIS_HOST: redis
   SPRING_REDIS_PORT: 6379
-  SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/plus_project?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: 1234
 
@@ -38,7 +38,7 @@ jobs:
       - name: Build with Gradle (no tests)
         run: |
           chmod +x ./gradlew
-          ./gradlew clean build -x test  # 테스트 제외
+          ./gradlew clean build -x test
 
       - name: Start Docker Compose
         run: |
@@ -54,27 +54,25 @@ jobs:
           docker-compose -f docker-compose.yml ps
           docker-compose -f docker-compose.yml logs db
           docker-compose -f docker-compose.yml logs redis
+          docker-compose -f docker-compose.yml exec -T db mysql -u root -p1234 -h db -e "SHOW DATABASES; SHOW TABLES FROM plus_project;"
+          echo "SPRING_DATASOURCE_HOST=$SPRING_DATASOURCE_HOST"
+          echo "SPRING_REDIS_HOST=$SPRING_REDIS_HOST"
+          # 연결 테스트 추가
+          docker-compose -f docker-compose.yml exec -T db mysql -u root -p1234 -h db -e "SELECT 1;"
+          docker-compose -f docker-compose.yml exec -T redis redis-cli -h redis ping
 
       - name: Test with Gradle
         run: |
-          ./gradlew test
+          ./gradlew test --info  # 자세한 로그 출력
 
       - name: Stop Docker Compose
         if: always()
         run: |
           docker-compose -f docker-compose.yml down
 
-  deploy:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/jeonjiho/ci-cd'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t myapp:latest .
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker tag myapp:latest ${{ secrets.DOCKER_USERNAME }}/myapp:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/myapp:latest
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/test/
