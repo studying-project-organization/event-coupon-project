@@ -1,16 +1,19 @@
 package com.plusproject.common.exception;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
-
-import static org.springframework.http.HttpStatus.*;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Getter
 public enum ErrorCode {
 
     // A
-
+    ACQUISITION_FAILED_LOCK(CONFLICT, "락 획득에 실패했습니다."),
     // C
 
     // D
@@ -31,6 +34,7 @@ public enum ErrorCode {
     INVALID_JWT_SIGNATURE(UNAUTHORIZED, "유효하지 않은 JWT 서명입니다."),
     INVALID_SELF_ROLE_UPDATE(BAD_REQUEST, "자기 자신의 권한은 수정할 수 없습니다."),
     INVALID_ADMIN_ROLE_UPDATE(BAD_REQUEST, "같은 관리자의 권한은 수정할 수 없습니다."),
+    INVALID_QUANTITY_IS_ZERO(BAD_REQUEST, "모든 쿠폰이 소모되었습니다."),
     INCORRECT_PASSWORD(UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
 
     // M

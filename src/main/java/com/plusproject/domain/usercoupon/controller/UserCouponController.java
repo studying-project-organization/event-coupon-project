@@ -1,17 +1,21 @@
 package com.plusproject.domain.usercoupon.controller;
 
 import com.plusproject.common.annotation.Auth;
+import com.plusproject.common.annotation.RedissonDistributedLock;
 import com.plusproject.common.dto.ApiResponse;
 import com.plusproject.common.dto.AuthUser;
 import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
 import com.plusproject.domain.usercoupon.dto.response.UserCouponResponse;
 import com.plusproject.domain.usercoupon.service.UserCouponService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
@@ -21,6 +25,7 @@ public class UserCouponController {
     private final UserCouponService userCouponService;
 
     @PostMapping
+    @RedissonDistributedLock(key = "#request.couponId")
     public ResponseEntity<ApiResponse<Void>> issuedCoupon(
         @Auth AuthUser authUser,
         @Valid @RequestBody IssuedCouponRequest request

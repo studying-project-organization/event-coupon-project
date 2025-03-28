@@ -28,6 +28,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
     // mysql
     runtimeOnly 'com.mysql:mysql-connector-j'
 
@@ -45,6 +48,9 @@ dependencies {
 
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // redission
+    implementation 'org.redisson:redisson-spring-boot-starter:3.37.0'
 
     // queryDSL
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
