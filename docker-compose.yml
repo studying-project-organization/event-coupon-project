@@ -16,7 +16,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: "1234"
       SPRING_REDIS_HOST: "redis"
       SPRING_REDIS_PORT: "6379"
-      REDISSON_HOST: "redis"
+      REDISSON_HOST: "redis://redis:6379"
       REDISSON_PORT: "6379"
       JWT_SECRET_KEY: "A3F27E88C1D0B54E9A11FF67A18C3D92A451B5E69D2E0E31F2A38DBA1B47F6D1"
     deploy:
@@ -55,6 +55,6 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m
-        reservations:
           memory: 128m
+        reservations:
+          memory: 64m
