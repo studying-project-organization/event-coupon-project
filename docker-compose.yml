@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   myapp:
-    image: 418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest
+    image: 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
     depends_on:
       db:
         condition: service_healthy

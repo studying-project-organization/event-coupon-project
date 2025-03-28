@@ -23,8 +23,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_JIHO }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_JIHO }}
           aws-region: ap-northeast-2
       - name: Log in to Amazon ECR
         id: login-ecr
@@ -34,18 +34,17 @@ jobs:
       - name: Build and push Docker image to ECR
         run: |
           docker build -t myapp:latest .
-          docker tag myapp:latest 418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest
-          docker push 418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest
+          docker tag myapp:latest 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
+          docker push 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
       - name: Deploy to EC2
         env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST_JIHO }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY_JIHO }}
         run: |
-          echo "$EC2_SSH_KEY" > ec2_key.pem
+          echo "$EC2_SSH_KEY_JIHO" > ec2_key.pem
           chmod 600 ec2_key.pem
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem $EC2_USER@$EC2_HOST << 'EOF'
-            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 418295688701.dkr.ecr.ap-northeast-2.amazonaws.com
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem $EC2_HOST_JIHO << 'EOF'
+            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com
             docker stop myapp-container || true
             docker rm myapp-container || true
             docker stop mysql-container || true
@@ -65,11 +64,3 @@ jobs:
               -e JAVA_OPTS="-Xmx128m -Xms64m" \
               -e JWT_SECRET_KEY="A3F27E88C1D0B54E9A11FF67A18C3D92A451B5E69D2E0E31F2A38DBA1B47F6D1" \
               --memory="512m" \
-              418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest
-            sleep 5
-            docker ps -a
-            docker logs mysql-container --tail 20
-            docker logs redis-container --tail 10
-            docker logs myapp-container --tail 20
-          EOF
-          rm ec2_key.pem
