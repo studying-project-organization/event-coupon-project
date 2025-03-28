@@ -64,7 +64,7 @@ jobs:
 
       - name: Test with Gradle
         run: |
-          ./gradlew test --info  # 자세한 로그 출력
+          ./gradlew test -Djwt.secret.key=$JWT_SECRET_KEY
 
       - name: Stop Docker Compose
         if: always()
