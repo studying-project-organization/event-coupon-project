@@ -1,9 +1,5 @@
 package com.plusproject.domain.usercoupon.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.groups.Tuple.tuple;
-
 import com.plusproject.SpringBootTestSupport;
 import com.plusproject.common.dto.AuthUser;
 import com.plusproject.common.exception.ApplicationException;
@@ -19,13 +15,20 @@ import com.plusproject.domain.usercoupon.dto.response.UserCouponResponse;
 import com.plusproject.domain.usercoupon.entity.UserCoupon;
 import com.plusproject.domain.usercoupon.repository.UserCouponRepository;
 import jakarta.persistence.EntityManager;
-import java.time.LocalDateTime;
-import java.util.List;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.groups.Tuple.tuple;
 
 @Transactional
 class UserCouponServiceTest extends SpringBootTestSupport {
@@ -150,7 +153,7 @@ class UserCouponServiceTest extends SpringBootTestSupport {
             .hasMessage(ErrorCode.NOT_FOUND_COUPON.getMessage() + NOT_FOUND_VALUE);
     }
 
-    /*@Test
+    @Test
     @DisplayName("쿠폰 발급받기시에 이미 발급받은 쿠폰이라면 DUPLICATE_COUPON_ISSUANCE 예외 발생")
     void issuedCoupon4() throws Exception {
         // given
@@ -164,7 +167,7 @@ class UserCouponServiceTest extends SpringBootTestSupport {
         assertThatThrownBy(() -> userCouponService.issuedCoupon(authUser, request))
             .isInstanceOf(ApplicationException.class)
             .hasMessage(ErrorCode.DUPLICATE_COUPON_ISSUANCE.getMessage());
-    }*/
+    }
 
     @Test
     @DisplayName("유저의 쿠폰 목록 조회 - 성공(0개의 데이터)")

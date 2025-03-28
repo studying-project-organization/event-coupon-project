@@ -12,10 +12,11 @@ import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
 import com.plusproject.domain.usercoupon.dto.response.UserCouponResponse;
 import com.plusproject.domain.usercoupon.entity.UserCoupon;
 import com.plusproject.domain.usercoupon.repository.UserCouponRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -32,29 +33,24 @@ public class UserCouponService {
         User findUser = userRepository.findByIdOrElseThrow(authUser.getId(), ErrorCode.NOT_FOUND_USER);
         Coupon findCoupon = couponRepository.findByIdOrElseThrow(request.getCouponId(), ErrorCode.NOT_FOUND_COUPON);
 
-        if (findCoupon.getQuantity() <= 0) {
-            throw new ApplicationException(ErrorCode.INVALID_QUANTITY_IS_ZERO);
-        }
-        /*if (userCouponRepository.existsByUser_IdAndCoupon_Id(findUser.getId(), findCoupon.getId())) {
+        if (userCouponRepository.existsByUser_IdAndCoupon_Id(findUser.getId(), findCoupon.getId())) {
             throw new ApplicationException(ErrorCode.DUPLICATE_COUPON_ISSUANCE);
-        }*/
-
-        couponRepository.decrementQuantity(request.getCouponId());
+        }
 
         UserCoupon newUserCoupon = UserCoupon.builder()
-                .user(findUser)
-                .coupon(findCoupon)
-                .status(CouponStatus.ISSUED)
-                .build();
-        UserCoupon savedUserCoupon = userCouponRepository.save(newUserCoupon);
+            .user(findUser)
+            .coupon(findCoupon)
+            .status(CouponStatus.ISSUED)
+            .build();
 
+        UserCoupon savedUserCoupon = userCouponRepository.save(newUserCoupon);
         return savedUserCoupon.getId();
     }
 
     public List<UserCouponResponse> findAllUserCoupon(AuthUser authUser) {
         return userCouponRepository.findAllByUser_Id(authUser.getId())
-                .stream()
-                .map(UserCouponResponse::of)
-                .toList();
+            .stream()
+            .map(UserCouponResponse::of)
+            .toList();
     }
 }

@@ -10,7 +10,6 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.PatternMatchUtils;
 import org.springframework.web.bind.MissingRequestHeaderException;
 
@@ -21,25 +20,19 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @RequiredArgsConstructor
-@Slf4j
 public class JwtFilter implements Filter {
 
     private static final Map<String, String[]> WHITE_LIST = Map.of(
-            "POST", new String[]{
-                    "/api/v1/auth/signup",
-                    "/api/v1/auth/signin",
-            }
+        "POST", new String[]{
+            "/api/v1/auth/signup",
+            "/api/v1/auth/signin"
+        }
     );
-
-    private static final String[] HEALTH_CHECK = new String[]{
-            "/health",
-            "/actuator/*"};
 
     private final JwtUtil jwtUtil;
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
@@ -82,19 +75,18 @@ public class JwtFilter implements Filter {
         }
     }
 
-    private void parseResponseErrorMessage(HttpServletResponse httpResponse, ApplicationException ex)
-            throws IOException {
+    private void parseResponseErrorMessage(HttpServletResponse httpResponse, ApplicationException ex) throws IOException {
         httpResponse.setStatus(ex.getStatus().value());
         httpResponse.setContentType("application/json;charset=UTF-8");
 
         String errorBody = String.format("""
-                {
-                    "status": "%s",
-                    "code": "%d",
-                    "message": "%s",
-                    "timestamp": "%s"
-                }
-                """, ex.getStatus().name(), ex.getStatus().value(), ex.getMessage(), LocalDateTime.now());
+            {
+                "status": "%s",
+                "code": "%d",
+                "message": "%s",
+                "timestamp": "%s"
+            }
+            """, ex.getStatus().name(), ex.getStatus().value(), ex.getMessage(), LocalDateTime.now());
 
         PrintWriter writer = httpResponse.getWriter();
         writer.println(errorBody);
@@ -104,11 +96,6 @@ public class JwtFilter implements Filter {
     private boolean isWhiteList(HttpServletRequest request) {
         String method = request.getMethod();
         String path = request.getRequestURI();
-        log.info(method + " / " + path);
-        if(PatternMatchUtils.simpleMatch(HEALTH_CHECK, path)){
-            log.info("Health check matched: " + path);
-            return true;
-        }
 
         if (!WHITE_LIST.containsKey(method)) {
             return false;
