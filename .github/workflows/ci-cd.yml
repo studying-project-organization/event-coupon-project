@@ -42,3 +42,26 @@ jobs:
           docker build -t plus-project .
           docker tag plus-project:latest 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
           docker push 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
+
+      - name: Deploy to EC2
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY_JIHO }}" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST_JIHO }} << 'EOF'
+            sudo apt update -y
+            sudo apt install -y docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ubuntu
+          
+            sudo apt install -y awscli
+          
+            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com
+          
+            docker stop $(docker ps -q) || true
+            docker rm $(docker ps -aq) || true
+          
+            docker pull 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
+            docker run -d -p 8080:8080 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
+          EOF
+          rm private_key.pem
