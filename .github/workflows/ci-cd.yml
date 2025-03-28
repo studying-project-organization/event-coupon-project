@@ -23,6 +23,11 @@ jobs:
       - name: Setup Gradle with caching
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
 
+      - name: Build and Test with Gradle
+        run: |
+          ./gradlew build
+          ./gradlew test
+
       - name: Install docker-compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.7/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -34,11 +39,8 @@ jobs:
           docker-compose -f docker-compose.yml up -d
       - name: Wait for services
         run: |
-          sleep 10
-      - name: Build and Test with Gradle
-        run: |
-          ./gradlew build
-          ./gradlew test
+          sleep 10    
+
       - name: Stop Docker Compose
         if: always()
         run: |
