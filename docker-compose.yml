@@ -23,9 +23,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512m
-        reservations:
           memory: 256m
+        reservations:
+          memory: 128m
     restart: on-failure
     command: ["sh", "-c", "sleep 10 && java -jar /app/myapp.jar"]
   db:
@@ -43,9 +43,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m
+          memory: 512m
         reservations:
-          memory: 128m
+          memory: 256m
   redis:
     image: redis:latest
     container_name: plus-project-redis
