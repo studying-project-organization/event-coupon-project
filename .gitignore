@@ -36,5 +36,4 @@ out/
 ### VS Code ###
 .vscode/
 *.properties
-*.yml
-!.github/workflows/*.yml
+src/main/resources/*.yml
