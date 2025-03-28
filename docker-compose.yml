@@ -39,7 +39,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m  # 256m → 192m
+          memory: 400m
         reservations:
           memory: 256m
   redis:
