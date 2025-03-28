@@ -37,3 +37,4 @@ out/
 .vscode/
 *.properties
 *.yml
+!.gibhub/workflows/*.yml
