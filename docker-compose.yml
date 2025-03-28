@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   myapp:
-    image: 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
+    image: 418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest
     depends_on:
       db:
         condition: service_healthy
@@ -17,13 +17,17 @@ services:
       SPRING_DATA_REDIS_HOST: "redis"
       SPRING_DATA_REDIS_PORT: "6379"
       JWT_SECRET_KEY: "A3F27E88C1D0B54E9A11FF67A18C3D92A451B5E69D2E0E31F2A38DBA1B47F6D1"
-      JAVA_OPTS: "-Xms128m -Xmx256m"
+      JAVA_OPTS: "-Xmx128m -Xms64m"
     deploy:
       resources:
         limits:
           memory: 512m
         reservations:
           memory: 256m
+    restart: on-failure
+    command: ["sh", "-c", "sleep 10 && java -jar /app/myapp.jar"]
+    networks:
+      - myapp-network
   db:
     image: mysql:8.0
     container_name: plus-project-db
@@ -39,9 +43,15 @@ services:
     deploy:
       resources:
         limits:
-          memory: 400m
-        reservations:
           memory: 256m
+        reservations:
+          memory: 128m
+    restart: on-failure
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command: --innodb-buffer-pool-size=16M --tmp-table-size=8M --max-connections=20 --innodb-log-file-size=8M --innodb-flush-log-at-trx-commit=0 --performance-schema=OFF
+    networks:
+      - myapp-network
   redis:
     image: redis:6.0
     container_name: plus-project-redis
@@ -54,6 +64,14 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128m
+          memory: 96m
         reservations:
-          memory: 128m
+          memory: 48m
+    restart: on-failure
+    networks:
+      - myapp-network
+volumes:
+  mysql-data:
+networks:
+  myapp-network:
+    driver: bridge
