@@ -50,6 +50,7 @@ jobs:
           ls -l docker-compose.yml || echo "docker-compose.yml not found in local repo"
           scp -v -o StrictHostKeyChecking=no -i private_key.pem docker-compose.yml ubuntu@${{ secrets.EC2_HOST_JIHO }}:~/docker-compose.yml
           ssh -v -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST_JIHO }} << 'EOF'
+            # Docker 설치 확인
             if ! command -v docker &> /dev/null; then
               sudo apt update -y
               sudo apt install -y docker.io
@@ -59,12 +60,14 @@ jobs:
             fi
             docker --version
 
+            # Docker Compose 설치 확인
             if ! command -v docker-compose &> /dev/null; then
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.7/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
             fi
             docker-compose --version
 
+            # AWS CLI 설치 확인
             if ! command -v aws &> /dev/null; then
               sudo apt update -y
               sudo apt install -y unzip
@@ -74,21 +77,42 @@ jobs:
             fi
             aws --version
 
+            # ECR 로그인
             sudo aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com || echo "ECR login failed"
 
+            # 기존 리소스 정리
             sudo docker stop $(sudo docker ps -q) || true
             sudo docker rm $(sudo docker ps -aq) || true
             sudo docker rmi $(sudo docker images -q) -f || true
             sudo docker system prune -a -f --volumes
 
+            # 최신 이미지 Pull
             sudo docker pull 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest || echo "Failed to pull myapp image"
 
+            # docker-compose.yml 확인
             ls -l ~/docker-compose.yml || echo "docker-compose.yml not found on EC2"
 
+            # .env 파일 생성 및 디버깃
+            # 기존 파일이 있으면 권한 수정
+            if [ -f ~/myapp.env ]; then
+              sudo chown ubuntu:ubuntu ~/myapp.env
+              chmod 644 ~/myapp.env
+            fi
             echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" > ~/myapp.env
             chmod 644 ~/myapp.env
+            chown ubuntu:ubuntu ~/myapp.env
+            echo "Contents of myapp.env:"
             cat ~/myapp.env
+            if [ -z "$(grep 'JWT_SECRET_KEY=' ~/myapp.env)" ]; then
+              echo "Error: JWT_SECRET_KEY is not set in myapp.env"
+              exit 1
+            fi
+            if [ "$(grep 'JWT_SECRET_KEY=' ~/myapp.env | cut -d'=' -f2)" = "" ]; then
+              echo "Error: JWT_SECRET_KEY value is empty in myapp.env"
+              exit 1
+            fi
 
+            # docker-compose 실행
             sudo docker-compose -f ~/docker-compose.yml up -d
             sudo docker ps
             sudo docker-compose logs
