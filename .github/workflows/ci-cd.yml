@@ -6,7 +6,7 @@ on:
 env:
   SPRING_REDIS_HOST: redis
   SPRING_REDIS_PORT: 6379
-  SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/plus_project?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/plus_project
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: 1234
 jobs:
@@ -19,10 +19,16 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
       - name: Setup Gradle with caching
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
-        with:
-          cache-enabled: true
+
+      - name: Install docker-compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.7/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
       - name: Start Docker Compose
         run: |
           docker-compose -f docker-compose.yml up -d
