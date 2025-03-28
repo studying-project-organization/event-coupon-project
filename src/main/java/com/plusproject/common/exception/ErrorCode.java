@@ -46,6 +46,7 @@ public enum ErrorCode {
 
     // S
     SAME_AS_OLD_PASSWORD(CONFLICT, "기존 비밀번호와 새 비밀번호가 같습니다."),
+    SOLDOUT_COUPON(BAD_REQUEST, "쿠폰이 품절되었습니다"),
 
     // U
     UNSUPPORTED_JWT_TOKEN(BAD_REQUEST, "지원되지 않는 JWT 토큰입니다.");

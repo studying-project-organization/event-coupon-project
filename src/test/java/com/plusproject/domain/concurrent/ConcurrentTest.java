@@ -10,18 +10,18 @@ import com.plusproject.domain.user.repository.UserRepository;
 import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
 import com.plusproject.domain.usercoupon.repository.UserCouponRepository;
 import com.plusproject.domain.usercoupon.service.UserCouponService;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 class ConcurrentTest extends SpringBootTestSupport {
@@ -38,9 +38,6 @@ class ConcurrentTest extends SpringBootTestSupport {
     @Autowired
     private UserCouponService userCouponService;
 
-    @Autowired
-    private EntityManager em;
-
     private User user;
 
     private AuthUser authUser;
@@ -48,12 +45,11 @@ class ConcurrentTest extends SpringBootTestSupport {
     private Coupon coupon;
 
     @BeforeEach
-    @Transactional
     void setUp() {
         user = User.builder()
-                .email("정청원12@naver.com")
+                .email("test@naver.com")
                 .password("Password1234!")
-                .nickname("찌호")
+                .nickname("testNickname")
                 .address("서울")
                 .userRole(UserRole.USER)
                 .build();
@@ -70,18 +66,14 @@ class ConcurrentTest extends SpringBootTestSupport {
         userRepository.save(user);
         couponRepository.save(coupon);
 
-//        em.flush();
-
         authUser = AuthUser.builder()
                 .id(user.getId())
                 .userRole(user.getUserRole())
                 .build();
-
-        em.clear();
     }
 
     @Test
-    public void 락없음() throws Exception {
+    public void 쿠폰발급테스트() throws Exception {
         int testThread = 10;
         int testCount = 10000;
         ExecutorService executorService = Executors.newFixedThreadPool(testThread);
@@ -118,5 +110,7 @@ class ConcurrentTest extends SpringBootTestSupport {
         System.out.println("예외 카운트 : " + exceptionCount);
         System.out.println("실제 발급된 전체 쿠폰 개수 : " + userCouponRepository.count());
         System.out.println("쿠폰 테이블에서 예상한 발급된 쿠폰 개수 : " + (10000 - resultCoupon.getQuantity()));
+
+        assertEquals(successfulUpdates.get(), userCouponRepository.count());
     }
 }

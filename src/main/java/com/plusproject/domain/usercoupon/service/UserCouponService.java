@@ -1,6 +1,7 @@
 package com.plusproject.domain.usercoupon.service;
 
 import com.plusproject.common.dto.AuthUser;
+import com.plusproject.common.exception.ApplicationException;
 import com.plusproject.common.exception.ErrorCode;
 import com.plusproject.domain.coupon.entity.Coupon;
 import com.plusproject.domain.coupon.enums.CouponStatus;
@@ -30,11 +31,15 @@ public class UserCouponService {
     @Transactional
     public Long issuedCoupon(AuthUser authUser, IssuedCouponRequest request) {
         User findUser = userRepository.findByIdOrElseThrow(authUser.getId(), ErrorCode.NOT_FOUND_USER);
-        Coupon findCoupon = couponRepository.findByIdOrElseThrow(request.getCouponId(), ErrorCode.NOT_FOUND_COUPON);
+        Coupon findCoupon = couponRepository.findByIdWithLock(request.getCouponId(), ErrorCode.NOT_FOUND_COUPON);
 
 //        if (userCouponRepository.existsByUser_IdAndCoupon_Id(findUser.getId(), findCoupon.getId())) {
 //            throw new ApplicationException(ErrorCode.DUPLICATE_COUPON_ISSUANCE);
 //        }
+
+        if (findCoupon.getQuantity() <= 0) {
+            throw new ApplicationException(ErrorCode.SOLDOUT_COUPON);
+        }
 
         findCoupon.setQuantity(findCoupon.getQuantity() - 1);
         couponRepository.save(findCoupon); // 변경된 쿠폰 수량 저장
