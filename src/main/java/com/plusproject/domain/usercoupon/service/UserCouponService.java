@@ -12,14 +12,15 @@ import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
 import com.plusproject.domain.usercoupon.dto.response.UserCouponResponse;
 import com.plusproject.domain.usercoupon.entity.UserCoupon;
 import com.plusproject.domain.usercoupon.repository.UserCouponRepository;
-import com.plusproject.redis.LettuceRepository;
+import com.plusproject.redis.lettuce.LettuceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static com.plusproject.common.exception.ErrorCode.EXHAUSETD_COUPON;
 import static com.plusproject.common.exception.ErrorCode.NOT_FOUND_COUPON;
 
 @Transactional(readOnly = true)
@@ -29,47 +30,44 @@ public class UserCouponService {
 
     private final UserCouponRepository userCouponRepository;
     private final UserRepository userRepository;
+    private final LettuceService lettuceService;
     private final CouponRepository couponRepository;
-    private final LettuceRepository lockServ;
+//    private final DistributedLockManager lockManager;
+//    private final LettuceRepository lockServ;
 
     @Transactional
     public Long issuedCoupon(AuthUser authUser, IssuedCouponRequest request) throws InterruptedException {
-        String lockKey = "usercoupon_" + request.getCouponId() + "_lock";
-        String lockValue = UUID.randomUUID().toString();
-
-//        if (!lockServ.acquireLock(lockKey, lockValue, 5)) {
-//            throw new ApplicationException(ErrorCode.REQUEST_TIMEOUT, "다른 요청이 너무 오래 걸리고 있습니다.");
-//        }
-
         try {
-            User findUser = userRepository.findByIdOrElseThrow(authUser.getId(), ErrorCode.NOT_FOUND_USER);
-            Coupon findCoupon = couponRepository.findByIdOrElseThrow(request.getCouponId(), NOT_FOUND_COUPON);
+//        String lockKey = "usercoupon_" + request.getCouponId() + "_lock";
+//        String lockValue = UUID.randomUUID().toString();
+            AtomicReference<Long> userCouponId = new AtomicReference<>();
+            lettuceService.executeWithLock(request.getCouponId(), () -> {
+                User findUser = userRepository.findByIdOrElseThrow(authUser.getId(), ErrorCode.NOT_FOUND_USER);
+                Coupon findCoupon = couponRepository.findByIdOrElseThrow(request.getCouponId(), NOT_FOUND_COUPON);
+                int quantityResult = couponRepository.decrementQuantity(request.getCouponId());
+                if (quantityResult == 0) {
+                    throw new ApplicationException(EXHAUSETD_COUPON);
+                }
 
-//            if (userCouponRepository.existsByUser_IdAndCoupon_Id(findUser.getId(), findCoupon.getId())) {
-//                throw new ApplicationException(ErrorCode.DUPLICATE_COUPON_ISSUANCE);
-//            }
+                UserCoupon newUserCoupon = UserCoupon.builder()
+                        .user(findUser)
+                        .coupon(findCoupon)
+                        .status(CouponStatus.ISSUED)
+                        .build();
 
-            UserCoupon newUserCoupon = UserCoupon.builder()
-                    .user(findUser)
-                    .coupon(findCoupon)
-                    .status(CouponStatus.ISSUED)
-                    .build();
+                userCouponId.set(userCouponRepository.save(newUserCoupon).getId());
+            });
 
-            lockServ.acquireLock(lockKey, lockValue, 5);
-
-            findCoupon.decreaseQuantity();
-            UserCoupon savedUserCoupon = userCouponRepository.save(newUserCoupon);
-            return savedUserCoupon.getId();
-        }
-        finally {
-            lockServ.releaseLock(lockKey, lockValue);
+            return userCouponId.get();
+        } catch (InterruptedException e) {
+            throw new ApplicationException(ErrorCode.ACQUISITION_FAILED_LOCK);
         }
     }
 
     public List<UserCouponResponse> findAllUserCoupon(AuthUser authUser) {
         return userCouponRepository.findAllByUser_Id(authUser.getId())
-            .stream()
-            .map(UserCouponResponse::of)
-            .toList();
+                .stream()
+                .map(UserCouponResponse::of)
+                .toList();
     }
 }

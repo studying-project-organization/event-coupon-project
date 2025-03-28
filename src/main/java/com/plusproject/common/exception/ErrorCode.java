@@ -10,6 +10,7 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 public enum ErrorCode {
 
     // A
+    ACQUISITION_FAILED_LOCK(CONFLICT, "락을 획득하지 못했습니다. 잠시 후 다시 시도해주세요."),
 
     // C
 
@@ -19,6 +20,7 @@ public enum ErrorCode {
 
     // E
     EXPIRED_JWT_TOKEN(UNAUTHORIZED, "만료된 JWT 토큰입니다."),
+    EXHAUSETD_COUPON(BAD_REQUEST, "쿠폰이 모두 소진되었습니다."),
 
     // F
     FORBIDDEN_ADMIN_ONLY(FORBIDDEN, "ADMIN 권한을 가진 유저만 접근할 수 있습니다."),
