@@ -24,7 +24,8 @@ public class JwtFilter implements Filter {
 
     private static final Map<String, String[]> WHITE_LIST = Map.of(
         "GET", new String[] {
-            "/test-redis"
+            "/test-redis",
+            "/health"
         },
         "POST", new String[]{
             "/api/v1/auth/signup",
