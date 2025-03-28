@@ -3,8 +3,8 @@ import { sleep, check } from 'k6';
 
 export const options = {
     stages: [
-        { duration: '10s', target: 2000 },
-        { duration: '80s', target: 2000 },
+        { duration: '10s', target: 5000 },
+        { duration: '80s', target: 5000 },
     ]
 };
 
@@ -25,13 +25,13 @@ export function setup() {
 }
 
 export default function (data) {
-    const payload = JSON.stringify({ couponId: 1 });
+    const payload = JSON.stringify({ couponId: 7 });
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': `${data.token}`,
     };
 
-    const res = http.post(mysqlUrl, payload, { headers });
+    const res = http.post(redissonUrl, payload, { headers });
     check(res, { 'status is 200': (r) => r.status === 200 });
     sleep(1);
 
