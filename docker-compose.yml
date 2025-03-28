@@ -21,7 +21,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 256m
+        reservations:
+          memory: 128m
   db:
     image: mysql:8.0
     container_name: plus-project-db
@@ -37,6 +39,8 @@ services:
     deploy:
       resources:
         limits:
+          memory: 512m  # 256m → 192m
+        reservations:
           memory: 256m
   redis:
     image: redis:6.0
@@ -50,4 +54,6 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128m
+          memory: 96m
+        reservations:
+          memory: 48m
