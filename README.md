@@ -1,26 +1,30 @@
 ## 동시성 이슈를 검증할 수 있는 테스트
 
 ### 1. local test 결과
+
 [ConcurrencyTest](src/test/java/com/plusproject/load/ConcurrencyTest.java)에서 실행
 
 #### 설정
-    
+
 - 수량 - 10000개
 - 쓰레드 - 10개
 - 테스트 횟수 - 1000번
 - 결과
+
 ```
 성공 카운트 : 1273
 예외 카운트 : 8727
 실제 발급된 전체 쿠폰 개수 : 1273
 쿠폰 테이블에서 예상한 발급된 쿠폰 개수 : 1001
 ```
+
 결과를 보면 총 성공 개수와 실제 발급된 쿠폰 개수는 1273개로 동일하다.
 하지만 실제 쿠폰 테이블에서 발급된 수량은 1001개로 약 250개의 차이를 보인다.
 또한, 쿠폰 테이블의 수량을 업데이트하기위한 요청이 동시에 들어오면서, 데드락이 발생하는 문제도 발견되었다.
 본인의 예상으로는 예외 카운트 중 대부분이 데드락으로 인한 에러일 가능성이 많다고 생각한다.
 
 ### 2. k6 테스트 결과
+
 테스트코드를 직접 구현해보는것과 더불어,
 k6 부하테스트 툴을 사용하여 실제 Application이 동작하였을때의 테스트도 진행해 보았다.
 [load_test](load_test.js)를 참고하면 된다.
@@ -56,11 +60,14 @@ k6 부하테스트 툴을 사용하여 실제 Application이 동작하였을때�
 
 총 6099개 중 2964개가 성공하였다고 나와있다.
 
-발급된 쿠폰의 개수를 
+발급된 쿠폰의 개수를
+
 ```sql
-SELECT COUNT(*) FROM user_coupon
+SELECT COUNT(*)
+FROM user_coupon
 ```
-를 통해 확인해보면, 
+
+를 통해 확인해보면,
 
 ![img.png](img/발급된%20쿠폰의%20개수.png)
 
@@ -79,31 +86,33 @@ SELECT COUNT(*) FROM user_coupon
 ## Redis Lettuce
 
 ### Lettuce 구현
+
 [RedisLettuceService](src/main/java/com/plusproject/domain/redis/service/RedisLettuceService.java), [RedisLettuceRepository](src/main/java/com/plusproject/domain/redis/repository/RedisLettuceRepository.java)
 
 - 먼저 레디스를 도커를 통해 실행시켜주었다.
 - acquireLock -> lock 획득을 시도하는 메서드
-  - 만약 정한 시간 안에 lock 획득을 성공하면, redis에 해당 lock을 저장하고, 획득 성공을 반환한다.
-  - 만약 실패하면, null을 반환해 실패했다는 것을 알려준다.
+    - 만약 정한 시간 안에 lock 획득을 성공하면, redis에 해당 lock을 저장하고, 획득 성공을 반환한다.
+    - 만약 실패하면, null을 반환해 실패했다는 것을 알려준다.
 - releaseLock -> lock을 해제하는 메서드
-  - lock을 얻은 후 실행이 완료되면 lock을 해제해야 한다.
-  - 해당 메서드를 통해 redis 메모리에서 해당 값을 찾아 제거하면 lock이 해제하는 것.
+    - lock을 얻은 후 실행이 완료되면 lock을 해제해야 한다.
+    - 해당 메서드를 통해 redis 메모리에서 해당 값을 찾아 제거하면 lock이 해제하는 것.
 - executeWithLock -> lock을 통해 실행하는 메서드
-  - 먼저 redis 메모리에 저장하기위해 lock:coupon:아이디 값을 String으로 생성한다.
-  - 해당 값을 사용해 lock을 획득할 수 있는 지 체크하고, 획득 하였다면, value를 return 받는다.
-  - 실패한다면 value = null이다.
-  - 만약 value가 null이면 lock 획득에 실패했다는 예외처리를 해준다.
-  - lock을 획득했다면, task를 실행하고, 마지막에 lock을 해제 해준다.
+    - 먼저 redis 메모리에 저장하기위해 lock:coupon:아이디 값을 String으로 생성한다.
+    - 해당 값을 사용해 lock을 획득할 수 있는 지 체크하고, 획득 하였다면, value를 return 받는다.
+    - 실패한다면 value = null이다.
+    - 만약 value가 null이면 lock 획득에 실패했다는 예외처리를 해준다.
+    - lock을 획득했다면, task를 실행하고, 마지막에 lock을 해제 해준다.
 
 ### UserCouponService 수정
+
 [UserCouponService](src/main/java/com/plusproject/domain/usercoupon/service/UserCouponService.java)
 
 - 서비스에서 쿠폰을 발급받는 메서드인 issuedCoupon 메서드를 수정해준다.
 - redisLettuceService를 통해 lock 획득 이후 실행할 수 있게 끔 코드를 수정해 주었다.
 - 추가로, 해당 메서드는 발급받은 쿠폰의 id를 반환해주어야 하기 때문에, 해당 값을 반환해준다.
 
-
 ### 결과
+
 ```
 INFO[0011] Failed: 409 - {"status":"CONFLICT","code":409,"message":"락 획득에 실패했습니다.","timestamp":"2025-03-27T10:31:48.4537876"}  source=console
 INFO[0013] Failed: 409 - {"status":"CONFLICT","code":409,"message":"락 획득에 실패했습니다.","timestamp":"2025-03-27T10:31:50.2757519"}  source=console
@@ -135,12 +144,16 @@ INFO[0013] Failed: 409 - {"status":"CONFLICT","code":409,"message":"락 획득�
     data_received...........................................................: 1.7 MB 32 kB/s
     data_sent...............................................................: 2.7 MB 52 kB/s
 ```
+
 k6 load_test를 돌린 결과이다.
 두번의 락 획득 실패로인한 실패 이외에는 총 7952개의 쿠폰 발급이 이루어졌다.
 발급 된 쿠폰의 개수를
+
 ```sql
-SELECT COUNT(*) FROM user_coupon
+SELECT COUNT(*)
+FROM user_coupon
 ```
+
 통해 확인해보면,
 
 ![img.png](img/lettuce%20사용%20후%20k6%20load_test%20결과.png)
@@ -157,18 +170,26 @@ SELECT COUNT(*) FROM user_coupon
 ## AOP를 이용한 Lock 구현
 
 ### 구현 위치
+
 [DistributedLock](src/main/java/com/plusproject/common/annotation/DistributedLock.java)
 [DistributedLockAspect](src/main/java/com/plusproject/common/aop/DistributedLockAspect.java)
 
 ### 내용
+
 - DistributedLock 어노테이션을 만들어 해당 어노테이션이 달려 있는 컨트롤러나 메서드 실행 시 Lettuce를 이용한 동시성 처리가 될 수 있게 수정 하였다.
 - DistributedLockAspect를 통해 DistributedLock이 달려 있는 컨트롤러나 메서드 실행시 어떤 것을 할지 구현함.
-  - 1. DistributedLock 어노테이션을 가져와 키값을 설정하고, 대기 시간 및 lock 점유 시간을 설정한 뒤 기존 RedisLettuce Service에 있던 executeWithLock() 메서드를 aspect 메서드 안에 넣어 주었다.
-  - 2. 이때, 기존 방식에서는 대기시간 및 lock 점유 시간을 상수로 설정하여 관리한 반면, 해당 방식에서는 어노테이션을 붙일 때 대기시간과 lock 점유 시간을 설정할 수 있도록 구현하였다.
-  - 3. UserCouponService에서 기존 쿠폰을 발급 받을때는 try-finally 및 executeWithLock()메서드를 사용하여 lock을 관리하였는데, 해당 방식 적용 이후에는 기존 서비스 코드와 같이 구현할 수 있어 try-finally와 같은 블록을 제거하여 가독성이 높아진다는 장점을 배울 수 있었다.
+  -
+        1. DistributedLock 어노테이션을 가져와 키값을 설정하고, 대기 시간 및 lock 점유 시간을 설정한 뒤 기존 RedisLettuce Service에 있던 executeWithLock()
+           메서드를 aspect 메서드 안에 넣어 주었다.
+    -
+        2. 이때, 기존 방식에서는 대기시간 및 lock 점유 시간을 상수로 설정하여 관리한 반면, 해당 방식에서는 어노테이션을 붙일 때 대기시간과 lock 점유 시간을 설정할 수 있도록 구현하였다.
+    -
+        3. UserCouponService에서 기존 쿠폰을 발급 받을때는 try-finally 및 executeWithLock()메서드를 사용하여 lock을 관리하였는데, 해당 방식 적용 이후에는 기존
+           서비스 코드와 같이 구현할 수 있어 try-finally와 같은 블록을 제거하여 가독성이 높아진다는 장점을 배울 수 있었다.
 - 주의점으로는 #request.couponId 처럼 파라미터 이름을 정확히 설정해야 한다는 점이 있다.
 
 ### 결과
+
 ```
   █ TOTAL RESULTS
 
@@ -196,13 +217,17 @@ SELECT COUNT(*) FROM user_coupon
     data_received...........................................................: 1.8 MB 30 kB/s
     data_sent...............................................................: 2.8 MB 48 kB/s
 ```
+
 다음과 같이 총 8174개의 시도중 7433개가 성공하고 740개는 실패하였다.
 실패한 이유는 lock을 획득하기 위해 기다리는 시간을 10초로 설정하였는데, 해당 시간을 넘어가 lock 획득에 실패하여 에러가 발생하였기 때문이다.
 따라서 성공한 7433개가 제대로 성공했는지 확인해보고자 한다.
 발급 된 쿠폰의 개수를
+
 ```sql
-SELECT COUNT(*) FROM user_coupon
+SELECT COUNT(*)
+FROM user_coupon
 ```
+
 통해 확인해보면,
 
 ![img.png](img/3.AOP%20적용%20후%20결과%201.png)
@@ -221,23 +246,26 @@ SELECT COUNT(*) FROM user_coupon
 ## Redisson을 이용한 Lock 구현
 
 ### 구현 위치
+
 [RedissonDistributedLock](src/main/java/com/plusproject/common/annotation/RedissonDistributedLock.java)
 [RedissonDistributedLockAspect](src/main/java/com/plusproject/common/aop/RedissonDistributedLockAspect.java)
 
 ### 내용
+
 - 위 AOP 구현에 추가적으로 Redisson을 사용하여 구현하였다.
 - Redisson을 사용하는 이유
-  - 분산 lock 구현이 쉽다.
-    - Lettuce는 분산 lock을 직접 구현해 주어야 한다.
-    - 하지만 Redisson은 RLock 인터페이스틀 통해 분산 lock을 제공한다.
-  - FairLock을 제공한다
-    - 동시성 처리에서 특정 상황에서의 중요한 부분은 바로 순서 보장이다.
-    - Lock을 받고 동시성 처리가 가능해도, 순서가 보장이 되지 않는다면, 이는 비즈니스적 관점에서는 크나큰 문제점이 된다.
-    - 하지만 FairLock을 사용한다면 위 문제점을 해결할 수 있다.
-    - FairLock은 Lcok을 요청한 순서대로 클라이언트가 Lock을 획득할 수 있도록 보장해준다.
-    - 따라서 동시성 처리 및 순서 보장까지 가능하기 때문에 매우 장점이 될 수 있다.
+    - 분산 lock 구현이 쉽다.
+        - Lettuce는 분산 lock을 직접 구현해 주어야 한다.
+        - 하지만 Redisson은 RLock 인터페이스틀 통해 분산 lock을 제공한다.
+    - FairLock을 제공한다
+        - 동시성 처리에서 특정 상황에서의 중요한 부분은 바로 순서 보장이다.
+        - Lock을 받고 동시성 처리가 가능해도, 순서가 보장이 되지 않는다면, 이는 비즈니스적 관점에서는 크나큰 문제점이 된다.
+        - 하지만 FairLock을 사용한다면 위 문제점을 해결할 수 있다.
+        - FairLock은 Lcok을 요청한 순서대로 클라이언트가 Lock을 획득할 수 있도록 보장해준다.
+        - 따라서 동시성 처리 및 순서 보장까지 가능하기 때문에 매우 장점이 될 수 있다.
 
 ### 결과
+
 ```
   █ TOTAL RESULTS
 
@@ -266,13 +294,17 @@ SELECT COUNT(*) FROM user_coupon
     data_sent...............................................................: 2.7 MB 53 kB/s
 
 ```
+
 다음과 같이 총 7913개의 시도중 7714개가 성공하고 198개는 실패하였다.
 실패한 이유는 lock을 획득하기 위해 기다리는 시간을 10초로 설정하였는데, 해당 시간을 넘어가 lock 획득에 실패하여 에러가 발생하였기 때문이다.
 따라서 성공한 7714개가 제대로 성공했는지 확인해보고자 한다.
 발급 된 쿠폰의 개수를
+
 ```sql
-SELECT COUNT(*) FROM user_coupon
+SELECT COUNT(*)
+FROM user_coupon
 ```
+
 통해 확인해보면,
 
 ![img.png](img/4.Redisson적용.png)
@@ -291,6 +323,7 @@ SELECT COUNT(*) FROM user_coupon
 ## 순서 보장 테스트
 
 ### Lettuce를 사용한 테스트
+
 ```
 2025-03-27T15:19:11.740+09:00  INFO 28484 --- [plus-project] [io-8080-exec-24] c.p.common.aop.DistributedLockAspect     : Lock acquired for key: 21bb
 2025-03-27T15:19:11.746+09:00  INFO 28484 --- [plus-project] [io-8080-exec-24] c.p.common.aop.DistributedLockAspect     : Lock released for key: 21bb
@@ -344,6 +377,7 @@ SELECT COUNT(*) FROM user_coupon
 ```
 
 ### Redisson을 사용한 테스트
+
 ```
 2025-03-27T15:14:54.350+09:00  INFO 27928 --- [plus-project] [io-8080-exec-77] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2584
 2025-03-27T15:14:54.356+09:00  INFO 27928 --- [plus-project] [io-8080-exec-77] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2584
@@ -388,7 +422,9 @@ SELECT COUNT(*) FROM user_coupon
 2025-03-27T15:14:54.464+09:00  INFO 27928 --- [plus-project] [o-8080-exec-151] c.p.c.aop.RedissonDistributedLockAspect  : Lock acquired for key: 2598
 2025-03-27T15:14:54.469+09:00  INFO 27928 --- [plus-project] [o-8080-exec-151] c.p.c.aop.RedissonDistributedLockAspect  : Lock released for key: 2598
 ```
+
 ### Lettuce 사용 k6 테스트 결과
+
 ```
   █ TOTAL RESULTS                                                                                                                                                                                                               
 
@@ -416,7 +452,9 @@ SELECT COUNT(*) FROM user_coupon
     data_received...........................................................: 2.0 MB 30 kB/s
     data_sent...............................................................: 3.7 MB 57 kB/s
 ```
+
 ### Redisson 사용 k6 테스트 결과
+
 ```
   █ TOTAL RESULTS
 
@@ -447,10 +485,12 @@ SELECT COUNT(*) FROM user_coupon
 ```
 
 ### 결과
+
 - 보이는 것처럼 Lettuce를 사용했을 때의 로그와 같이 요청한 ID의 순서가 뒤죽박죽 섞여 실행되는 것을 알 수 있다.
 - 하지만 Redisson을 사용했을 경우, 로그와 같이 요청한 ID의 순서가 보장되어 실행되는 것을 알 수 있다.
 
 ### 느낀점
+
 - 추가적으로, Redisson을 사용했을 경우 lock을 획득하지 못하여 발생하는 예외가 현저히 적은 것을 알 수 있었다.
 - 또한, 초당 요청 처리 건수도 Lettuce에 비해 Redisson이 약간이나마 높은 것을 알 수 있었다.
 - lock 획득에 실패하는 사용자들에 대하여 추가적인 처리를 해줄 수 있다면(ex : 대기열) 더욱 좋은 동시성 처리 및 순서 보장 처리가 될 것이라 생각 한다.
@@ -458,6 +498,126 @@ SELECT COUNT(*) FROM user_coupon
 ---
 
 ## CI/CD
+
+### 계획
+
+1. github actions을 사용하여 자동 배포
+2. 프로젝트를 docker image로 만들어 ECR에 저장
+3. ECR에 저장된 docekr image를 EC2 인스턴스에서 받아와 배포
+
+### 결론
+
+1. ./github/workflows/에 ci-cd.yml 파일을 만들어 github actions에서 사용
+2. ci-cd 파일은 다음을 수행함.
+    - # 1. 리포지토리 체크아웃
+    - # 2. JDK 17 설정
+    - # 3. Gradle 빌드
+    - # 4. AWS 자격 증명 설정
+    - # 5. Amazon ECR 로그인
+    - # 6. Docker 이미지 빌드 및 푸시
+    - # 7. EC2에 SSH로 접속 및 배포
+- 해당 방식을 사용하여 특정 브랜치에 push가 될 경우, 위 ci-cd.yml을 수행할 수 있도록 구성하였다.
+
+```yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - [배포할 브랜치]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 리포지토리 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. JDK 17 설정
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 3. Gradle 빌드
+      - name: Build with Gradle
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean build -x test[테스트 필요시 테스트까지 같이 빌드 설정]
+        env:
+          SPRING_ACTUATOR_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
+
+      # 4. AWS 자격 증명 설정
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 5. Amazon ECR 로그인
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: true
+
+      # 6. Docker 이미지 빌드 및 푸시
+      - name: Build and push Docker image to ECR
+        run: |
+          docker build -t myapp:latest .
+          docker tag [태그 이름] [ECR 디렉토리]
+          docker push [ECR 디렉토리]
+
+      # 7. EC2에 SSH로 접속 및 배포
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          echo "$EC2_SSH_KEY" > ec2_key.pem
+          chmod 600 ec2_key.pem
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+            aws ecr get-login-password --region [리전] | docker login --username AWS --password-stdin [ECR 주소(amazonaws.com 까지만)]
+            //실행중인 기존 도커 컨테이너 중지 및 삭제
+            docker stop myapp-container || true
+            docker rm myapp-container || true
+            docker stop mysql-container || true
+            docker rm mysql-container || true
+            docker stop redis-container || true
+            docker rm redis-container || true
+          
+            //mysql 컨테이너 실행
+            docker run -d --name mysql-container -e MYSQL_ROOT_PASSWORD=[비밀번호] -e MYSQL_DATABASE=plus-project -p 3306:3306 --memory="256m" mysql:8.0 --innodb-buffer-pool-size=16M --performance-schema=OFF
+          
+            //redis 컨테이너 실행
+            docker run -d --name redis-container -p 6379:6379 --memory="128m" redis:latest
+          
+            sleep 10
+          
+            //application 실행
+            docker run -d --name myapp-container -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-container:3306/[DB이름] \
+              -e SPRING_DATASOURCE_USERNAME=root \
+              -e SPRING_DATASOURCE_PASSWORD=[비밀번호] \
+              -e SPRING_DATA_REDIS_HOST=[레디스 컨테이너 이름] \
+              -e SPRING_DATA_REDIS_PORT=6379 \
+              -e JAVA_OPTS="-Xmx128m -Xms64m" \
+              -e JWT_SECRET_KEY="[JWT 비밀 키]" \
+              --memory="512m" \
+              [ECR 디렉토리]
+            sleep 5
+            docker ps -a
+            docker logs mysql-container --tail 20
+            docker logs redis-container --tail 10
+            docker logs myapp-container --tail 20
+          EOF
+          rm ec2_key.pem
+```
 
 ---
 
@@ -470,24 +630,30 @@ SELECT COUNT(*) FROM user_coupon
 ```
 WARN[0046] Request Failed                                error="Post \"http://localhost:8080/api/v1/user-coupon\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
 ```
+
 다음과 같은 에러 발생.
-해당 에러를 확인해보니, 
+해당 에러를 확인해보니,
 
 ```js
 vus: 200, // 가상 유저 수
-duration: '20s', // 테스트 지속 시간
+    duration
+:
+'20s', // 테스트 지속 시간
 ```
+
 가상 유저수를 200으로 잡고 시작하였을 때, 요청이 동시에 많이 들어가 서버에서 해당 연결을 거부한 것으로 추정하였다.
 
 #### 해결
 
-따라서, 
+따라서,
+
 ```js
 stages: [
-        { duration: '10s', target: 2000 },
-        { duration: '30s', target: 2000 },
-    ]
+    {duration: '10s', target: 2000},
+    {duration: '30s', target: 2000},
+]
 ```
+
 다음과 같이 단계적으로 가상 유저수를 늘리는 설정으로 테스트를 해보았더니, 정상작동 하였다.
 
 ### 2. lettuce 구현 이후 k6 테스트 시 동시성 처리 문제가 계속 발생
@@ -498,5 +664,6 @@ Redis Lettuce 구현 이후 k6 테스트 시 동시성 처리가 되어야 함�
 ex) 발급은 8500개가 되었는데, 쿠폰 수량은 7000개가 줄어있는 경우
 
 #### 해결
+
 기존 UserCouponService에서는 해당 쿠폰의 수량을 엔티티를 통해 줄이고, 엔티티 매니저에서 알아서 처리하도록 구현하였음.
 해당 방식을 couponRepository에서 바로 수량을 줄일 수 있도록 수정하였더니, 정상적으로 처리 됨.

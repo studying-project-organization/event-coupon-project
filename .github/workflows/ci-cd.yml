@@ -28,7 +28,7 @@ jobs:
           ./gradlew clean build -x test
         env:
           SPRING_ACTUATOR_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
-          
+
       # 4. AWS 자격 증명 설정
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -68,8 +68,8 @@ jobs:
             docker rm mysql-container || true
             docker stop redis-container || true
             docker rm redis-container || true
-            docker run -d --name mysql-container --network myapp-network -e MYSQL_ROOT_PASSWORD=1111 -e MYSQL_DATABASE=plus-project --memory="256m" mysql:8.0 --innodb-buffer-pool-size=16M --performance-schema=OFF
-            docker run -d --name redis-container --network myapp-network --memory="128m" redis:latest
+            docker run -d --name mysql-container --network myapp-network -e MYSQL_ROOT_PASSWORD=1111 -e MYSQL_DATABASE=plus-project -p 3306:3306 --memory="256m" mysql:8.0 --innodb-buffer-pool-size=16M --performance-schema=OFF
+            docker run -d --name redis-container --network myapp-network -p 6379:6379 --memory="128m" redis:latest
             sleep 10
             docker run -d --name myapp-container --network myapp-network -p 8080:8080 \
               -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-container:3306/plus-project \
