@@ -90,31 +90,4 @@ jobs:
             sudo docker pull 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest || echo "Failed to pull myapp image"
 
             # docker-compose.yml 확인
-            ls -l ~/docker-compose.yml || echo "docker-compose.yml not found on EC2"
-
-            # .env 파일 생성 및 디버깃
-            # 기존 파일이 있으면 권한 수정
-            if [ -f ~/myapp.env ]; then
-              sudo chown ubuntu:ubuntu ~/myapp.env
-              chmod 644 ~/myapp.env
-            fi
-            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" > ~/myapp.env
-            chmod 644 ~/myapp.env
-            chown ubuntu:ubuntu ~/myapp.env
-            echo "Contents of myapp.env:"
-            cat ~/myapp.env
-            if [ -z "$(grep 'JWT_SECRET_KEY=' ~/myapp.env)" ]; then
-              echo "Error: JWT_SECRET_KEY is not set in myapp.env"
-              exit 1
-            fi
-            if [ "$(grep 'JWT_SECRET_KEY=' ~/myapp.env | cut -d'=' -f2)" = "" ]; then
-              echo "Error: JWT_SECRET_KEY value is empty in myapp.env"
-              exit 1
-            fi
-
-            # docker-compose 실행
-            sudo docker-compose -f ~/docker-compose.yml up -d
-            sudo docker ps
-            sudo docker-compose logs
-          EOF
-          rm private_key.pem
+            ls -l ~/docker-compose.yml || echo "docker-compose.yml not found on E
