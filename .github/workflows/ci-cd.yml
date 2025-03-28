@@ -49,19 +49,23 @@ jobs:
           chmod 600 private_key.pem
           ls -l docker-compose.yml || echo "docker-compose.yml not found in local repo"
           scp -v -o StrictHostKeyChecking=no -i private_key.pem docker-compose.yml ubuntu@${{ secrets.EC2_HOST_JIHO }}:~/docker-compose.yml
-          ssh -v -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST_JIHO }} << 'EOF'
+          ssh -v -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST_JIHO }} << EOF
+            # ECR 로그인
+            sudo aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com || echo "ECR login failed"
 
-          # ECR 로그인
-          sudo aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com || echo "ECR login failed"
+            # 기존 리소스 정리
+            sudo docker stop \$(sudo docker ps -q) || true
+            sudo docker rm \$(sudo docker ps -aq) || true
+            sudo docker rmi \$(sudo docker images -q) -f || true
+            sudo docker system prune -a -f --volumes
 
-          # 기존 리소스 정리
-          sudo docker stop $(sudo docker ps -q) || true
-          sudo docker rm $(sudo docker ps -aq) || true
-          sudo docker rmi $(sudo docker images -q) -f || true
-          sudo docker system prune -a -f --volumes
+            # 최신 이미지 Pull
+            sudo docker pull 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest || echo "Failed to pull myapp image"
 
-          # 최신 이미지 Pull
-          sudo docker pull 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest || echo "Failed to pull myapp image"
+            # docker-compose.yml 확인
+            ls -l ~/docker-compose.yml || echo "docker-compose.yml not found on EC2"
 
-          # docker-compose.yml 확인
-          ls -l ~/docker-compose.yml || echo "docker-compose.yml not found on E
+            # docker-compose 실행
+            sudo docker-compose -f ~/docker-compose.yml up -d
+            sudo docker ps
+            sudo docker-compose logs
