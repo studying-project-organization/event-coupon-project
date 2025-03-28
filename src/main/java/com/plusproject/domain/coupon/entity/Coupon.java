@@ -1,17 +1,14 @@
 package com.plusproject.domain.coupon.entity;
 
 import com.plusproject.common.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import com.plusproject.domain.coupon.dto.request.CreateCouponRequest;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -52,7 +49,4 @@ public class Coupon extends BaseEntity {
         this.endDate = endDate;
     }
 
-    public void updateQuantity() {
-        this.quantity = this.quantity - 1;
-    }
 }
