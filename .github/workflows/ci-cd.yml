@@ -8,59 +8,55 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
-        env:
-          SPRING_ACTUATOR_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_JIHO }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_JIHO }}
           aws-region: ap-northeast-2
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-        with:
-          mask-password: true
-      - name: Build and push Docker image to ECR
+      - name: Login to Amazon ECR
         run: |
-          docker build -t myapp:latest .
-          docker tag myapp:latest 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
+          aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com
+      - name: Build and Push to ECR
+        run: |
+          docker build -t plus-project .
+          docker tag plus-project:latest 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
           docker push 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
       - name: Deploy to EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST_JIHO }}
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY_JIHO }}
         run: |
-          echo "$EC2_SSH_KEY_JIHO" > ec2_key.pem
-          chmod 600 ec2_key.pem
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem $EC2_HOST_JIHO << 'EOF'
-            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com
-            docker stop myapp-container || true
-            docker rm myapp-container || true
-            docker stop mysql-container || true
-            docker rm mysql-container || true
-            docker stop redis-container || true
-            docker rm redis-container || true
-            docker network create myapp-network || true
-            docker run -d --name mysql-container --network myapp-network -e MYSQL_ROOT_PASSWORD=1234 -e MYSQL_DATABASE=plus-project -p 3306:3306 --memory="256m" mysql:8.0 --innodb-buffer-pool-size=16M --tmp-table-size=8M --max-connections=20 --innodb-log-file-size=8M --innodb-flush-log-at-trx-commit=0 --performance-schema=OFF
-            docker run -d --name redis-container --network myapp-network -p 6379:6379 --memory="96m" redis:6.0
-            sleep 10
-            docker run -d --name myapp-container --network myapp-network -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-container:3306/plus-project \
-              -e SPRING_DATASOURCE_USERNAME=root \
-              -e SPRING_DATASOURCE_PASSWORD=1234 \
-              -e SPRING_DATA_REDIS_HOST=redis-container \
-              -e SPRING_DATA_REDIS_PORT=6379 \
-              -e JAVA_OPTS="-Xmx128m -Xms64m" \
-              -e JWT_SECRET_KEY="A3F27E88C1D0B54E9A11FF67A18C3D92A451B5E69D2E0E31F2A38DBA1B47F6D1" \
-              --memory="512m" \
+          echo "${{ secrets.EC2_SSH_KEY_JIHO }}" > private_key.pem
+          chmod 600 private_key.pem
+          ls -l docker-compose.yml || echo "docker-compose.yml not found in local repo"
+          scp -v -o StrictHostKeyChecking=no -i private_key.pem docker-compose.yml ubuntu@${{ secrets.EC2_HOST_JIHO }}:~/docker-compose.yml
+          ssh -v -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST_JIHO }} << EOF
+
+            sudo aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com || echo "ECR login failed"
+
+            # 기존 리소스 정리
+            sudo docker stop \$(sudo docker ps -q) || true
+            sudo docker rm \$(sudo docker ps -aq) || true
+            sudo docker rmi \$(sudo docker images -q) -f || true
+            sudo docker system prune -a -f --volumes
+
+            # 최신 이미지 Pull
+            sudo docker pull 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest || echo "Failed to pull myapp image"
+
+            # docker-compose.yml 확인
+            ls -l ~/docker-compose.yml || echo "docker-compose.yml not found on EC2"
+
+            # docker-compose 실행
+            sudo docker-compose -f ~/docker-compose.yml up -d
+            sudo docker ps
+            sudo docker-compose logs
