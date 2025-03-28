@@ -19,17 +19,14 @@ services:
       REDISSON_HOST: "redis"
       REDISSON_PORT: "6379"
       JWT_SECRET_KEY: "A3F27E88C1D0B54E9A11FF67A18C3D92A451B5E69D2E0E31F2A38DBA1B47F6D1"
-      JAVA_OPTS: "-Xms256m -Xmx512m"
     deploy:
       resources:
         limits:
           memory: 256m
         reservations:
           memory: 128m
-    restart: on-failure
-    command: ["sh", "-c", "sleep 10 && java -jar /app/myapp.jar"]
   db:
-    image: mysql:latest
+    image: mysql:8.0
     container_name: plus-project-db
     environment:
       MYSQL_ROOT_PASSWORD: 1234
