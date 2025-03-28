@@ -29,10 +29,10 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
 
-      - name: Build and Test with Gradle
+      - name: Build with Gradle (no tests)
         run: |
           chmod +x ./gradlew
-          ./gradlew clean build
+          ./gradlew clean build -x test
 
       - name: Start Docker Compose
         run: |
@@ -41,6 +41,10 @@ jobs:
       - name: Wait for services
         run: |
           sleep 10    
+
+      - name: Test with Gradle
+        run: |
+          ./gradlew test
 
       - name: Stop Docker Compose
         if: always()
