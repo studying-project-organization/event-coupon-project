@@ -457,6 +457,10 @@ SELECT COUNT(*) FROM user_coupon
 
 ---
 
+## CI/CD
+
+---
+
 ## Trouble Shooting
 
 ### 1. k6 테스트 시 연결이 되지 않는다는 에러 발생.

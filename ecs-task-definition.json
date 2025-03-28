@@ -1,11 +1,10 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:ap-northeast-2:418295688701:task-definition/plus-project-task:1",
   "containerDefinitions": [
     {
       "name": "myapp",
-      "image": "418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak/myapp:latest",
-      "cpu": 0,
-      "memory": 512,
+      "image": "418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest",
+      "cpu": 256,
+      "memory": 300,
       "portMappings": [
         {
           "containerPort": 8080,
@@ -53,7 +52,7 @@
     {
       "name": "db",
       "image": "mysql:8.0",
-      "cpu": 0,
+      "cpu": 256,
       "memory": 512,
       "portMappings": [
         {
@@ -78,19 +77,20 @@
       "healthCheck": {
         "command": [
           "CMD-SHELL",
-          "mysqladmin ping -h localhost -u root -p1111"
+          "mysqladmin ping -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD"
         ],
-        "interval": 5,
+        "interval": 15,
         "timeout": 5,
-        "retries": 10
+        "retries": 10,
+        "startPeriod": 30
       },
       "systemControls": []
     },
     {
       "name": "redis",
       "image": "redis:latest",
-      "cpu": 0,
-      "memory": 256,
+      "cpu": 128,
+      "memory": 128,
       "portMappings": [
         {
           "containerPort": 6379,
@@ -108,50 +108,16 @@
           "redis-cli",
           "ping"
         ],
-        "interval": 5,
+        "interval": 15,
         "timeout": 5,
-        "retries": 10
+        "retries": 10,
+        "startPeriod": 15
       },
       "systemControls": []
     }
   ],
   "family": "plus-project-task",
   "executionRoleArn": "arn:aws:iam::418295688701:role/ecsTaskExecutionRole",
-  "networkMode": "awsvpc",
-  "revision": 1,
-  "volumes": [],
-  "status": "ACTIVE",
-  "requiresAttributes": [
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.24"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.ecr-auth"
-    },
-    {
-      "name": "ecs.capability.container-ordering"
-    },
-    {
-      "name": "ecs.capability.container-health-check"
-    },
-    {
-      "name": "ecs.capability.execution-role-ecr-pull"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-    },
-    {
-      "name": "ecs.capability.task-eni"
-    }
-  ],
-  "placementConstraints": [],
-  "compatibilities": [
-    "EC2"
-  ],
-  "requiresCompatibilities": [
-    "EC2"
-  ],
-  "registeredAt": "2025-03-28T01:13:27.278Z",
-  "registeredBy": "arn:aws:iam::418295688701:root",
-  "tags": []
+  "networkMode": "bridge",
+  "volumes": []
 }
