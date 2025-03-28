@@ -1,11 +1,12 @@
 package com.plusproject.domain.user.controller;
 
-import com.plusproject.common.annotation.AdminOnly;
+import com.plusproject.common.annotation.Access;
 import com.plusproject.common.annotation.Auth;
 import com.plusproject.common.dto.ApiResponse;
 import com.plusproject.common.dto.AuthUser;
 import com.plusproject.domain.user.dto.request.UpdateAdminRequest;
 import com.plusproject.domain.user.dto.request.UpdatePasswordRequest;
+import com.plusproject.domain.user.enums.UserRole;
 import com.plusproject.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @AdminOnly
+    @Access(UserRole.ADMIN)
     @PutMapping("/{userId}/admin")
     public ResponseEntity<ApiResponse<Void>> updateUserRole(
         @Auth AuthUser authUser,

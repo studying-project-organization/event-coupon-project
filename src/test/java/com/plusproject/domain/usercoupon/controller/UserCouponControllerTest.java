@@ -9,8 +9,7 @@ import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -21,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Transactional
 class UserCouponControllerTest extends ControllerTestSupport {
 
     private static final String PATH = "/api/v1/user-coupon";
@@ -31,7 +31,6 @@ class UserCouponControllerTest extends ControllerTestSupport {
     void setUp() {
         accessToken = jwtUtil.createAccessToken(1L, UserRole.ADMIN);
     }
-
 
     @Test
     @DisplayName("쿠폰 발급하기 - 성공")
