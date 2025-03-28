@@ -17,6 +17,7 @@ services:
       SPRING_REDIS_PORT: "6379"
       REDISSON_HOST: "redis"
       REDISSON_PORT: "6379"
+      JWT_SECRET_KEY: "your-test-secret-key"
   db:
     image: mysql:latest
     container_name: plus-project-db
