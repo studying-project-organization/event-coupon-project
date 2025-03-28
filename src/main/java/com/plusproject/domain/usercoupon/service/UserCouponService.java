@@ -12,36 +12,47 @@ import com.plusproject.domain.usercoupon.dto.request.IssuedCouponRequest;
 import com.plusproject.domain.usercoupon.dto.response.UserCouponResponse;
 import com.plusproject.domain.usercoupon.entity.UserCoupon;
 import com.plusproject.domain.usercoupon.repository.UserCouponRepository;
-import com.plusproject.redis.lettuce.LettuceService;
-import lombok.RequiredArgsConstructor;
+import com.plusproject.redis.DistributedLockManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Qualifier;
+
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
 
 import static com.plusproject.common.exception.ErrorCode.EXHAUSETD_COUPON;
 import static com.plusproject.common.exception.ErrorCode.NOT_FOUND_COUPON;
 
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
 @Service
 public class UserCouponService {
 
     private final UserCouponRepository userCouponRepository;
+
     private final UserRepository userRepository;
-    private final LettuceService lettuceService;
     private final CouponRepository couponRepository;
-//    private final DistributedLockManager lockManager;
-//    private final LettuceRepository lockServ;
+
+    private final DistributedLockManager lockManager;
+
+    public UserCouponService(
+            UserCouponRepository userCouponRepository,
+            UserRepository userRepository,
+            CouponRepository couponRepository,
+            @Qualifier("redissonLock") DistributedLockManager lockManager
+    ) {
+        this.userCouponRepository = userCouponRepository;
+        this.userRepository = userRepository;
+        this.couponRepository = couponRepository;
+        this.lockManager = lockManager;
+    }
 
     @Transactional
     public Long issuedCoupon(AuthUser authUser, IssuedCouponRequest request) throws InterruptedException {
         try {
-//        String lockKey = "usercoupon_" + request.getCouponId() + "_lock";
-//        String lockValue = UUID.randomUUID().toString();
             AtomicReference<Long> userCouponId = new AtomicReference<>();
-            lettuceService.executeWithLock(request.getCouponId(), () -> {
+            lockManager.executeWithLock(request.getCouponId(), () -> {
                 User findUser = userRepository.findByIdOrElseThrow(authUser.getId(), ErrorCode.NOT_FOUND_USER);
                 Coupon findCoupon = couponRepository.findByIdOrElseThrow(request.getCouponId(), NOT_FOUND_COUPON);
                 int quantityResult = couponRepository.decrementQuantity(request.getCouponId());
