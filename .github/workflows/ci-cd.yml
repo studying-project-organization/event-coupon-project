@@ -11,6 +11,7 @@ env:
   SPRING_REDIS_PORT: 6379
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: 1234
+  JWT_SECRET_KEY: "your-test-secret-key"
 
 jobs:
   build-and-test:
