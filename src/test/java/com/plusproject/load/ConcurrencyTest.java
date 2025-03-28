@@ -22,7 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 @ActiveProfiles("test")
 public class ConcurrencyTest extends SpringBootTestSupport {
@@ -48,7 +47,6 @@ public class ConcurrencyTest extends SpringBootTestSupport {
     private IssuedCouponRequest request;
 
     @BeforeEach
-    @Transactional
     void setUp() {
         testUser = User.builder()
                 .email("test@example.com")
