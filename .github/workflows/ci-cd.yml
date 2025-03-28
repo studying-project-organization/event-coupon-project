@@ -5,18 +5,9 @@ on:
     branches:
       - jeonjiho/ci-cd
 
-env:
-  SPRING_DATASOURCE_HOST: db
-  SPRING_REDIS_HOST: redis
-  SPRING_REDIS_PORT: 6379
-  SPRING_DATASOURCE_USERNAME: root
-  SPRING_DATASOURCE_PASSWORD: 1234
-  JWT_SECRET_KEY: "your-test-secret-key"
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,11 +25,9 @@ jobs:
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.7/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
 
-      - name: Build with Gradle (no tests)
+      - name: Build with Gradle
         run: |
-          chmod +x ./gradlew
           ./gradlew clean build -x test
 
       - name: Start Docker Compose
@@ -50,21 +39,9 @@ jobs:
           until docker-compose -f docker-compose.yml exec -T db mysqladmin ping -h db -u root -p1234; do echo "Waiting for MySQL..."; sleep 1; done
           until docker-compose -f docker-compose.yml exec -T redis redis-cli ping; do echo "Waiting for Redis..."; sleep 1; done
 
-      - name: Debug services
-        run: |
-          docker-compose -f docker-compose.yml ps
-          docker-compose -f docker-compose.yml logs db
-          docker-compose -f docker-compose.yml logs redis
-          docker-compose -f docker-compose.yml exec -T db mysql -u root -p1234 -h db -e "SHOW DATABASES; SHOW TABLES FROM plus_project;"
-          echo "SPRING_DATASOURCE_HOST=$SPRING_DATASOURCE_HOST"
-          echo "SPRING_REDIS_HOST=$SPRING_REDIS_HOST"
-          # 연결 테스트 추가
-          docker-compose -f docker-compose.yml exec -T db mysql -u root -p1234 -h db -e "SELECT 1;"
-          docker-compose -f docker-compose.yml exec -T redis redis-cli -h redis ping
-
       - name: Test with Gradle
         run: |
-          ./gradlew test -Djwt.secret.key=$JWT_SECRET_KEY
+          ./gradlew test --info
 
       - name: Stop Docker Compose
         if: always()
@@ -77,3 +54,27 @@ jobs:
         with:
           name: test-reports
           path: build/reports/tests/test/
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_JIHO }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_JIHO }}
+          aws-region: ap-northeast-2
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com
+
+      - name: Build and Push to ECR
+        run: |
+          docker build -t plus-project .
+          docker tag plus-project:latest 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
+          docker push 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
