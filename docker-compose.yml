@@ -10,6 +10,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      SPRING_PROFILES_ACTIVE: "prod"
       SPRING_DATASOURCE_URL: "jdbc:mysql://db:3306/plus_project"
       SPRING_DATASOURCE_USERNAME: "root"
       SPRING_DATASOURCE_PASSWORD: "1234"
@@ -18,6 +19,8 @@ services:
       REDISSON_HOST: "redis"
       REDISSON_PORT: "6379"
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    env_file:
+      - myapp.env
   db:
     image: mysql:latest
     container_name: plus-project-db

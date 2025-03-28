@@ -47,12 +47,17 @@ jobs:
         run: |
           echo "${{ secrets.EC2_SSH_KEY_JIHO }}" > private_key.pem
           chmod 600 private_key.pem
-          # docker-compose.yml 확인
           ls -l docker-compose.yml || echo "docker-compose.yml not found in local repo"
           scp -v -o StrictHostKeyChecking=no -i private_key.pem docker-compose.yml ubuntu@${{ secrets.EC2_HOST_JIHO }}:~/docker-compose.yml
           ssh -v -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_HOST_JIHO }} << 'EOF'
-            sudo systemctl status docker || sudo systemctl start docker
-            sudo systemctl enable docker
+            if ! command -v docker &> /dev/null; then
+              sudo apt update -y
+              sudo apt install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ubuntu
+            fi
+            docker --version
 
             if ! command -v docker-compose &> /dev/null; then
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.7/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -69,12 +74,20 @@ jobs:
             fi
             aws --version
 
-            ls -l ~/docker-compose.yml || echo "docker-compose.yml not found on EC2"
-
-            sudo aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com
+            sudo aws ecr get-login-password --region ap-northeast-2 | sudo docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com || echo "ECR login failed"
 
             sudo docker stop $(sudo docker ps -q) || true
             sudo docker rm $(sudo docker ps -aq) || true
+            sudo docker rmi $(sudo docker images -q) -f || true
+            sudo docker system prune -a -f --volumes
+
+            sudo docker pull 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest || echo "Failed to pull myapp image"
+
+            ls -l ~/docker-compose.yml || echo "docker-compose.yml not found on EC2"
+
+            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" > ~/myapp.env
+            chmod 644 ~/myapp.env
+            cat ~/myapp.env
 
             sudo docker-compose -f ~/docker-compose.yml up -d
             sudo docker ps
