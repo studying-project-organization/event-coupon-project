@@ -26,7 +26,9 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
-
+        env:
+          SPRING_ACTUATOR_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
+          
       # 4. AWS 자격 증명 설정
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -49,11 +51,40 @@ jobs:
           docker tag myapp:latest 418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest
           docker push 418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest
 
-      # 7. Amazon ECS에 배포
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ecs-task-definition.json
-          service: arn:aws:ecs:ap-northeast-2:418295688701:service/plus-project-jeontak/plus-project-service
-          cluster: arn:aws:ecs:ap-northeast-2:418295688701:cluster/plus-project-jeontak
-          wait-for-service-stability: true
+      # 7. EC2에 SSH로 접속 및 배포
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          echo "$EC2_SSH_KEY" > ec2_key.pem
+          chmod 600 ec2_key.pem
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 418295688701.dkr.ecr.ap-northeast-2.amazonaws.com
+            docker stop myapp-container || true
+            docker rm myapp-container || true
+            docker stop mysql-container || true
+            docker rm mysql-container || true
+            docker stop redis-container || true
+            docker rm redis-container || true
+            docker run -d --name mysql-container --network myapp-network -e MYSQL_ROOT_PASSWORD=1111 -e MYSQL_DATABASE=plus-project --memory="256m" mysql:8.0 --innodb-buffer-pool-size=16M --performance-schema=OFF
+            docker run -d --name redis-container --network myapp-network --memory="128m" redis:latest
+            sleep 10
+            docker run -d --name myapp-container --network myapp-network -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-container:3306/plus-project \
+              -e SPRING_DATASOURCE_USERNAME=root \
+              -e SPRING_DATASOURCE_PASSWORD=1111 \
+              -e SPRING_DATA_REDIS_HOST=redis-container \
+              -e SPRING_DATA_REDIS_PORT=6379 \
+              -e JAVA_OPTS="-Xmx128m -Xms64m" \
+              -e JWT_SECRET_KEY="DBWrjBFv78AzkggUVxKiPngUEfvR0uECpz4qJut+jLM=" \
+              --memory="512m" \
+              418295688701.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project-jeontak:latest
+            sleep 5
+            docker ps -a
+            docker logs mysql-container --tail 20
+            docker logs redis-container --tail 10
+            docker logs myapp-container --tail 20
+          EOF
+          rm ec2_key.pem
