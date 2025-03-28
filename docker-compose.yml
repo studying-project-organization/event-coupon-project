@@ -1,7 +1,9 @@
 version: '3.8'
 services:
   myapp:
-    image: 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com/plus-project:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       db:
         condition: service_healthy
