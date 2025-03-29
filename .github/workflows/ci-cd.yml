@@ -87,6 +87,13 @@ jobs:
         if: always()
         run: docker-compose -f docker-compose.test.yml down
 
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: build/reports/tests/test
+
+
   deploy:
     needs: build-test
     runs-on: ubuntu-latest
