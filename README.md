@@ -406,7 +406,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 
 <details>
-    <summary>Redisson  사용</summary>
+    <summary>Redisson  사용 (Local 환경)</summary>
 
 ### `Lettuce`가 아닌 `Redisson`을 사용한 이유
 
@@ -487,7 +487,80 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 </details>
 
 <details>
-    <summary>MySQL 사용</summary>
+    <summary>Redisson 사용 (Docker Container)</summary>
+
+- 이번엔 내 로컬에 띄워준 Docker Container 에서의 실행 결과를 테스트 해보았다.
+
+![Image](https://github.com/user-attachments/assets/dd5e1ec5-5a9d-43b5-bd45-2cf85cb9ca69)
+
+### 성능 테스트 및 비교 (Redisson 적용, Docker Container)
+
+#### 테스트 조건
+- k6를 이용해 10초 동안 가상 유저를 점진적으로 2,000명까지 증가시킨 후, 이후 80초 동안 2,000명의 가상 유저가 계속 요청을 보내도록 설정하였다.
+- coupons 테이블의 쿠폰 수량은 100,000개로 설정하여 테스트를 진행하였다.
+
+```
+scenarios: (100.00%) 1 scenario, 2000 max VUs, 2m0s max duration (incl. graceful stop):
+* default: Up to 2000 looping VUs for 1m30s over 2 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+
+     ✓ status is 200
+
+     █ setup
+
+       ✓ login success
+
+     checks.........................: 100.00% 32378 out of 32378
+     data_received..................: 6.9 MB  68 kB/s
+     data_sent......................: 12 MB   122 kB/s
+     http_req_blocked...............: avg=29.81µs min=0s      med=0s    max=4.88ms  p(90)=0s      p(95)=511.31µs
+     http_req_connecting............: avg=27.62µs min=0s      med=0s    max=1.18ms  p(90)=0s      p(95)=504.51µs
+     http_req_duration..............: avg=4.41s   min=12.08ms med=4.55s max=15.19s  p(90)=4.93s   p(95)=5.03s
+       { expected_response:true }...: avg=4.41s   min=12.08ms med=4.55s max=15.19s  p(90)=4.93s   p(95)=5.03s
+     http_req_failed................: 0.00%   0 out of 32378
+     http_req_receiving.............: avg=69.54µs min=0s      med=0s    max=18.28ms p(90)=515.2µs p(95)=524.7µs
+     http_req_sending...............: avg=3.49µs  min=0s      med=0s    max=1.49ms  p(90)=0s      p(95)=0s
+     http_req_tls_handshaking.......: avg=0s      min=0s      med=0s    max=0s      p(90)=0s      p(95)=0s
+     http_req_waiting...............: avg=4.41s   min=12.08ms med=4.55s max=15.19s  p(90)=4.93s   p(95)=5.03s
+     http_reqs......................: 32378   319.432191/s
+     iteration_duration.............: avg=5.41s   min=1.05s   med=5.55s max=16.19s  p(90)=5.93s   p(95)=6.03s
+     iterations.....................: 32377   319.422325/s
+     vus............................: 1       min=1              max=2000
+     vus_max........................: 2000    min=2000           max=2000
+
+                                                                                                                                                                                                                                    
+running (1m41.4s), 0000/2000 VUs, 32377 complete and 0 interrupted iterations                                                                                                                                                       
+default ✓ [======================================] 0000/2000 VUs  1m30s     
+```
+
+### DB 데이터 결과
+
+![Image](https://github.com/user-attachments/assets/0896c9c9-41a0-4ec6-846c-3bb329443c3a)
+
+- 쿠폰 `100,000`개 중에서 발급 성공한 `32,377`개를 빼면 남은 수량 `67,623`개로 데이터 무결성이 지켜졌다.
+- 초당 처리 가능한 요청도 약 319 개 정도로 `Local`환경에서의 초당 처리 요청인 500개 정도에서 대략 200개 정도 차이가 난다.
+- `응답 지연(p95)`도 6초 이내로 확실히 `Local` 보단 느린 응답 속도를 보여주었다.
+- 이번 과제에선 indexing 과 Caching 적용을 해주지 않아서 만약 성능 개선을 좀 더 한다면 해당 부분의 내용으로 성능 개선을 해줄 수 있을 것이다.
+
+### Local vs Docker 비교
+
+```
+Local 의 결과
+http_req_waiting...............: avg=2.34s    min=2.53ms med=2.49s max=12.86s  p(90)=2.66s   p(95)=2.68s
+http_reqs......................: 51902   500.857266/s
+iteration_duration.............: avg=3.34s    min=1s     med=3.49s max=13.86s  p(90)=3.66s   p(95)=3.68s
+iterations.....................: 51901   500.847616/s
+
+Docker Container 의 결과
+http_req_waiting...............: avg=4.41s   min=12.08ms med=4.55s max=15.19s  p(90)=4.93s   p(95)=5.03s
+http_reqs......................: 32378   319.432191/s
+iteration_duration.............: avg=5.41s   min=1.05s   med=5.55s max=16.19s  p(90)=5.93s   p(95)=6.03s
+iterations.....................: 32377   319.422325/s
+```
+</details>
+
+<details>
+    <summary>MySQL 사용(Local 환경)</summary>
 
 - MySQL(비관적 락 / Exclusive Lock) 의 장점
     - 구현이 단순하고 직관적이다
@@ -559,6 +632,69 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 - 소규모 트래픽 혹은 별도 분산 락 서버를 구성하기 어려운 환경에서는 `MySQL`의 비관적 락이 간단하고 직관적인 해법이 되는 것 같다.
 - 대규모 트래픽, 높은 동시성, 장시간 락 유지가 필요한 상황에서는 DB가 병목 지점이 될 수 있어 `Redis`나 다른 분산 락 시스템이 더 적합하다고 한다.
 - 운영 환경에 따라 트랜잭션 설계(락 획득 범위, 시점, 순서 등)에 주의하여 데드락 위험과 락 경합을 최소화 시켜야 한다.
+
+</details>
+
+<details>
+    <summary>MySQL 사용(Docker Container)</summary>
+
+- 마지막으로 로컬에 띄워준 Docker Container 에서의 실행 결과를 `MySQL Lock` 방식을 사용해 테스트 해보았다.
+
+```
+scenarios: (100.00%) 1 scenario, 2000 max VUs, 2m0s max duration (incl. graceful stop):
+* default: Up to 2000 looping VUs for 1m30s over 2 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+     ✓ status is 200
+
+     █ setup
+
+       ✓ login success
+
+     checks.........................: 100.00% 29156 out of 29156
+     data_received..................: 6.2 MB  65 kB/s
+     data_sent......................: 11 MB   118 kB/s
+     http_req_blocked...............: avg=29.25µs min=0s      med=0s    max=6.07ms p(90)=0s      p(95)=506.12µs
+     http_req_connecting............: avg=26.24µs min=0s      med=0s    max=6.07ms p(90)=0s      p(95)=0s
+     http_req_duration..............: avg=5.02s   min=10.62ms med=5.19s max=6.47s  p(90)=5.81s   p(95)=5.96s
+       { expected_response:true }...: avg=5.02s   min=10.62ms med=5.19s max=6.47s  p(90)=5.81s   p(95)=5.96s
+     http_req_failed................: 0.00%   0 out of 29156
+     http_req_receiving.............: avg=67.33µs min=0s      med=0s    max=2.97ms p(90)=515.2µs p(95)=525.2µs
+     http_req_sending...............: avg=5.4µs   min=0s      med=0s    max=1.02ms p(90)=0s      p(95)=0s
+     http_req_tls_handshaking.......: avg=0s      min=0s      med=0s    max=0s     p(90)=0s      p(95)=0s
+     http_req_waiting...............: avg=5.02s   min=10.09ms med=5.19s max=6.47s  p(90)=5.81s   p(95)=5.96s
+     http_reqs......................: 29156   304.394069/s
+     iteration_duration.............: avg=6.02s   min=1.05s   med=6.19s max=7.47s  p(90)=6.81s   p(95)=6.96s
+     iterations.....................: 29155   304.383629/s
+     vus............................: 293     min=185            max=2000
+     vus_max........................: 2000    min=2000           max=2000
+
+                                                                                                                                                                                                                                    
+running (1m35.8s), 0000/2000 VUs, 29155 complete and 0 interrupted iterations                                                                                                                                                       
+default ✓ [======================================] 0000/2000 VUs  1m30s           
+```
+
+### DB 데이터 결과
+![Image](https://github.com/user-attachments/assets/2c19973e-d75e-4489-a596-844d113cc624)
+
+- 쿠폰 `100,000`개 중에서 발급 성공한 `29,155`개를 빼면 남은 수량 `70,845`개로 데이터 무결성이 지켜졌다.
+- 초당 처리 가능한 요청은 약 304 개로 Local 환경에서 돌렸던 약 570 개보다는 확실히 낮은 성능을 나타낸다.
+- 응답 지연(p95)도 6.96s, 약 7초 이내로 이 부분도 Local 환경보다는 느린 편으로 나타났다.
+
+### Local vs Docker 비교
+
+```
+Local 에서의 결과
+http_req_waiting...............: avg=2.24s    min=1.55ms med=2.37s max=3.53s   p(90)=2.46s   p(95)=2.56s
+http_reqs......................: 53456   570.509159/s
+iteration_duration.............: avg=3.24s    min=1s     med=3.37s max=4.53s   p(90)=3.46s   p(95)=3.56s
+iterations.....................: 53455   570.498487/s
+
+Docker Container 의 결과
+http_req_waiting...............: avg=5.02s   min=10.09ms med=5.19s max=6.47s  p(90)=5.81s   p(95)=5.96s
+http_reqs......................: 29156   304.394069/s
+iteration_duration.............: avg=6.02s   min=1.05s   med=6.19s max=7.47s  p(90)=6.81s   p(95)=6.96s
+iterations.....................: 29155   304.383629/s
+```
 
 </details>
 

@@ -31,7 +31,7 @@ export default function (data) {
         'Authorization': `${data.token}`,
     };
 
-    const res = http.post(redissonUrl, payload, { headers });
+    const res = http.post(mysqlUrl, payload, { headers });
     check(res, { 'status is 200': (r) => r.status === 200 });
     sleep(1);
 
