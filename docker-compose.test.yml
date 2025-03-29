@@ -17,6 +17,10 @@ services:
     image: redis:6.0
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 5s
+      retries: 10
 
   myapp:
     build: .
@@ -25,11 +29,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: "test"
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/plus_project"
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-root}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-1234}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       SPRING_DATA_REDIS_HOST: "redis"
       SPRING_DATA_REDIS_PORT: "6379"
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-A3F27E88C1D0B54E9A11FF67A18C3D92A451B5E69D2E0E31F2A38DBA1B47F6D1}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       JAVA_OPTS: "-Xms128m -Xmx256m"
     depends_on:
       mysql:
