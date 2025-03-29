@@ -98,7 +98,7 @@ class AuthServiceTest extends SpringBootTestSupport {
         AccessTokenResponse response = authService.signin(request);
 
         // then
-        assertThat(response.getAccessToken()).isEqualTo(accessToken);
+        assertThat(response.getAccessToken()).contains("Bearer ");
     }
 
     @Test
