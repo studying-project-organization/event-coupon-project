@@ -558,4 +558,13 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 </details>
 
-[//]: # (CI/CD 동작 테스트)
+***
+
+## CI/CD
+
+### CI/CD 플로우
+
+1. docker-compose 를 사용하여 MySQL, Reddis, Spring-Boot 컨테이너들을 하나로 통합하여 관리
+2. Git Actions 기능을 사용하여 빌드 및 테스트 후에 배포
+3. ECR 을 사용하여 docker-compose 에서 생성한 이미지 저장
+4. EC2 를 사용하여 ECR 에 저장되어 있는 이미지를 PULL 한 후에 docker-compose 를 사용하여 EC2 환경에 docker container 를 띄워서 사용

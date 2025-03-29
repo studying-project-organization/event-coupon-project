@@ -3,8 +3,8 @@ import { sleep, check } from 'k6';
 
 export const options = {
     stages: [
-        { duration: '10s', target: 5000 },
-        { duration: '80s', target: 5000 },
+        { duration: '10s', target: 2000 },
+        { duration: '80s', target: 2000 },
     ]
 };
 
@@ -25,7 +25,7 @@ export function setup() {
 }
 
 export default function (data) {
-    const payload = JSON.stringify({ couponId: 7 });
+    const payload = JSON.stringify({ couponId: 1 });
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': `${data.token}`,

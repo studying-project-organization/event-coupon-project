@@ -12,16 +12,16 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: "prod"
       SPRING_DATASOURCE_URL: "jdbc:mysql://db:3306/plus_project"
-      SPRING_DATASOURCE_USERNAME: "root"
-      SPRING_DATASOURCE_PASSWORD: "1234"
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       SPRING_DATA_REDIS_HOST: "redis"
       SPRING_DATA_REDIS_PORT: "6379"
-      JWT_SECRET_KEY: "A3F27E88C1D0B54E9A11FF67A18C3D92A451B5E69D2E0E31F2A38DBA1B47F6D1"
-      JAVA_OPTS: "-Xms128m -Xmx256m -XX:MaxMetaspaceSize=64m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/app/heapdump.hprof"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JAVA_OPTS: "-Xms128m -Xmx256m"
     deploy:
       resources:
         limits:
-          memory: 512m  # 팀원 설정 반영
+          memory: 512m
         reservations:
           memory: 128m
     restart: on-failure
@@ -47,7 +47,7 @@ services:
     restart: on-failure
     volumes:
       - mysql-data:/var/lib/mysql
-    command: --innodb-buffer-pool-size=16M --tmp-table-size=8M --max-connections=20 --innodb-log-file-size=8M --innodb-flush-log-at-trx-commit=0 --performance-schema=OFF  # 팀원 메모리 최적화 반영
+    command: --innodb-buffer-pool-size=16M --tmp-table-size=8M --max-connections=20 --innodb-log-file-size=8M --innodb-flush-log-at-trx-commit=0 --performance-schema=OFF
   redis:
     image: redis:6.0
     container_name: plus-project-redis
@@ -60,7 +60,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 96m  # 기존 128m에서 줄임
+          memory: 96m
         reservations:
           memory: 48m
     restart: on-failure
