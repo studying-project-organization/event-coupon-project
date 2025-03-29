@@ -55,27 +55,6 @@ jobs:
       - name: Start myapp container (Test Environment)
         run: docker-compose -f docker-compose.test.yml up -d
 
-      - name: Wait for services to be ready
-        run: |
-          # Wait for MySQL to be ready
-          for i in {1..30}; do
-            if nc -z localhost 3306; then
-              echo "MySQL is up"
-              break
-            fi
-            echo "Waiting for MySQL..."
-            sleep 2
-          done
-          # Wait for Redis to be ready
-          for i in {1..30}; do
-            if nc -z localhost 6379; then
-              echo "Redis is up"
-              break
-            fi
-            echo "Waiting for Redis..."
-            sleep 2
-          done
-
       - name: Run Tests
         run: |
           ./gradlew test \
