@@ -2,6 +2,7 @@ version: '3.8'
 services:
   myapp:
     build: .
+    container_name: myapp
     depends_on:
       db:
         condition: service_healthy
