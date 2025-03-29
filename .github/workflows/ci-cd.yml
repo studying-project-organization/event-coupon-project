@@ -40,7 +40,7 @@ jobs:
         run: docker-compose -f docker-compose.test.yml up -d
 
       - name: Run Tests
-        run: docker exec -i myapp ./gradlew test
+        run: docker exec -i myapp bash -c "cd src && ./gradlew test"
 
       - name: Stop test environment
         if: always()
