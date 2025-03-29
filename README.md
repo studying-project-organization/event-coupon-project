@@ -568,3 +568,9 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 2. Git Actions 기능을 사용하여 빌드 및 테스트 후에 배포
 3. ECR 을 사용하여 docker-compose 에서 생성한 이미지 저장
 4. EC2 를 사용하여 ECR 에 저장되어 있는 이미지를 PULL 한 후에 docker-compose 를 사용하여 EC2 환경에 docker container 를 띄워서 사용
+
+### 요구 사항
+- [x] 코드 변경 시, 자동으로 빌드 및 테스트를 수행하는 CI 파이프라인을 구성하세요.
+  - Github Actions 사용
+- [x] 테스트가 성공적으로 완료되면 프로덕션에 자동 배포되도록 CD 파이프라인을 설정하세요.
+  - ECR 에 docker-compose 결과 이미지 업로드, 이후에 EC2 에서 ECR 에 저장되어있는 docker-compose 파일을 가져와서 빌드
