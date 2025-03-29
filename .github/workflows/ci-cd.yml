@@ -22,7 +22,7 @@ jobs:
           cat <<EOF > src/test/resources/application-test.yml
           spring:
             datasource:
-              url: jdbc:mysql://localhost:3306/plus_project
+              url: jdbc:mysql://db:3306/plus_project
               username: ${SPRING_DATASOURCE_USERNAME}
               password: ${SPRING_DATASOURCE_PASSWORD}
               driver-class-name: com.mysql.cj.jdbc.Driver
@@ -31,7 +31,7 @@ jobs:
                 ddl-auto: create
             data:
               redis:
-                host: localhost
+                host: redis
                 port: 6379
           jwt:
             secret:
@@ -83,16 +83,15 @@ jobs:
       - name: Run Tests
         run: ./gradlew test
 
-      - name: Stop test environment
-        if: always()
-        run: docker-compose -f docker-compose.test.yml down
-
       - name: Upload Test Report
         uses: actions/upload-artifact@v4
         with:
           name: test-report
           path: build/reports/tests/test
 
+      - name: Stop test environment
+        if: always()
+        run: docker-compose -f docker-compose.test.yml down
 
   deploy:
     needs: build-test
