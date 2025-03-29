@@ -586,4 +586,17 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
   - [x] 보안: 배포 과정에서 민감한 정보나 설정이 노출되지 않도록 보안 설정을 철저히 관리합니다.
     - 민감한 정보나 설정이 노출되지 않게 GitHub Actions 의 환경변수 기능을 사용하여 application.yml 파일등을 모두 환경 변수 처리하여 노출되지 않도록 하였습니다.
 
+### ECR 이미지
+
+![Image](https://github.com/user-attachments/assets/09a4fa5b-a7c9-4fe6-b2b4-168978e8922c)
+
+### Git Actions 이미지
+
+![Image](https://github.com/user-attachments/assets/a6eb38b4-33f4-4ec2-a55a-6cce2be80ed0)
+
+- 성공적으로 test 코드 및 docker 작동 이후에
+- deploy 과정이 실행된다.
+
+[EC2 Public Health Test 링크](http://43.202.138.136:8080/api/v1/health)
+
 
