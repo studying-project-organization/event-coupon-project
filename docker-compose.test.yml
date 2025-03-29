@@ -1,10 +1,10 @@
 version: '3.8'
 services:
-  mysql:
+  db:
     image: mysql:8.0
     container_name: test-db
     environment:
-      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: plus_project
     ports:
       - "3306:3306"
@@ -12,7 +12,6 @@ services:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p1234 && sleep 5"]
       interval: 10s
       retries: 5
-
   redis:
     image: redis:6.0
     container_name: test-redis
