@@ -57,5 +57,3 @@ services:
         reservations:
           memory: 48m
     restart: on-failure
-volumes:
-  mysql-data:
