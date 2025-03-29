@@ -7,7 +7,6 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    # 만약 테스트용 Secrets가 없다면 기본값이 사용됩니다.
     env:
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
@@ -61,33 +60,8 @@ jobs:
       - name: Start test environment (MySQL & Redis only)
         run: docker-compose -f docker-compose.test.yml up -d
 
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for MySQL..."
-          for i in {1..60}; do
-            if nc -z localhost 3306; then
-              echo "MySQL is ready"
-              break
-            fi
-            sleep 2
-          done
-          echo "Waiting for Redis..."
-          for i in {1..60}; do
-            if nc -z localhost 6379; then
-              echo "Redis is ready"
-              break
-            fi
-            sleep 2
-          done
-
       - name: Run Tests
-        run: ./gradlew test
-
-      - name: Upload Test Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-report
-          path: build/reports/tests/test
+        run: ./gradlew test -Dspring.profiles.active=test
 
       - name: Stop test environment
         if: always()
