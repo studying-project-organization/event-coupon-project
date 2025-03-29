@@ -35,6 +35,10 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
+      - name: Login to Amazon ECR for test
+        run: |
+          aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com
+
       - name: Start Docker Compose
         run: docker-compose up -d
 
