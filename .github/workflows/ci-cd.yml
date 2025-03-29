@@ -52,11 +52,37 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
-      - name: Start myapp container (for tests)
+      - name: Start myapp container (Test Environment)
         run: docker-compose -f docker-compose.test.yml up -d
 
+      - name: Wait for services to be ready
+        run: |
+          # Wait for MySQL to be ready
+          for i in {1..30}; do
+            if nc -z localhost 3306; then
+              echo "MySQL is up"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+          # Wait for Redis to be ready
+          for i in {1..30}; do
+            if nc -z localhost 6379; then
+              echo "Redis is up"
+              break
+            fi
+            echo "Waiting for Redis..."
+            sleep 2
+          done
+
       - name: Run Tests
-        run: ./gradlew test
+        run: |
+          ./gradlew test \
+            -Dspring.profiles.active=test \
+            -DSPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME \
+            -DSPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD \
+            -DJWT_SECRET_KEY=$JWT_SECRET_KEY
 
       - name: Stop myapp container
         if: always()
