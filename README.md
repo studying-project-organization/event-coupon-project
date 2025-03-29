@@ -732,9 +732,8 @@ iterations.....................: 29155   304.383629/s
 
 - 성공적으로 test 코드 및 docker 작동 이후에
 - deploy 과정이 실행된다.
+- 마지막으로 EC2 인스턴스 내부에서 Nginx 라이브러리를 사용해 내가 구매한 Route 53 의 Domain 과 EC2 를 연결시키고, Https 설정까지 마친 후에 Nginx 설정을 통해 EC2 인스턴스에서 실행 중인 Spring-Boot 서버를 연결시켰다. 
 
-- 마지막으로 EC2 내부에서 Nginx 를 사용해 내가 구매한 Route 53 의 Domain 과 EC2 를 연결시키고, Https 설정까지 마친 후에 Nginx 설정을 통해 EC2 인스턴스에서 실행 중인 Spring-Boot 서버를 연결시켰다. 
-
-[Https 프로젝트 링크](https://plus-project/wjswlgh96/com/api/v1/health)
+[Https 프로젝트 헬스 체크 링크](https://plus-project.wjswlgh96.com/api/v1/health)
 
 
