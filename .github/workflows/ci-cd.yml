@@ -6,10 +6,6 @@ on:
 
 jobs:
   build-test:
-    env:
-      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
-      SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -45,33 +41,22 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
-          
+
       - name: Install docker-compose
         run: |
           DOCKER_COMPOSE_VERSION=2.20.2
           sudo curl -L "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4.0.2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_JIHO }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_JIHO }}
-          aws-region: ap-northeast-2
-
-      - name: Login to Amazon ECR for test
-        run: |
-          aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 600627346244.dkr.ecr.ap-northeast-2.amazonaws.com
-
-      - name: Start Docker Compose
-        run: docker-compose up -d
+      - name: Start myapp container (for tests)
+        run: docker-compose -f docker-compose.test.yml up -d
 
       - name: Run Tests
         run: ./gradlew test
 
-      - name: Stop Docker Compose
+      - name: Stop myapp container
         if: always()
-        run: docker-compose down
+        run: docker-compose -f docker-compose.test.yml down
 
   deploy:
     needs: build-test

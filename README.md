@@ -1,3 +1,7 @@
+## 테스트 커버리지 결과
+
+![Image](https://github.com/user-attachments/assets/3b7a8ac7-bae3-41a9-920d-1c106cf6a09b)
+
 ## 동시성 문제 테스트
 
 - k6 를 사용하여 부하 테스트를 진행하여 실제 DB에 접근할때 동시성 관련 기능을 사용하지 않으면 발생하는 문제 파악
