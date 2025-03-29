@@ -18,9 +18,9 @@ services:
       SPRING_DATA_REDIS_PORT: "6379"
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       JAVA_OPTS: "-Xms128m -Xmx256m"
-
   db:
     image: mysql:8.0
+    container_name: test-db
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: plus_project
@@ -29,11 +29,10 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p1234 && sleep 5" ]
       interval: 10s
-      timeout: 5s
       retries: 5
-
   redis:
     image: redis:6.0
+    container_name: test-redis
     ports:
       - "6379:6379"
     healthcheck:
