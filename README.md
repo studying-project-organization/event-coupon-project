@@ -1,6 +1,6 @@
 ## 테스트 커버리지 결과
 
-![Image](https://github.com/user-attachments/assets/3b7a8ac7-bae3-41a9-920d-1c106cf6a09b)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/%ED%85%8C%EC%8A%A4%ED%8A%B8+%EC%BB%A4%EB%B2%84%EB%A6%AC%EC%A7%80.png)
 
 ## 동시성 문제 테스트
 
@@ -55,17 +55,17 @@ select count(*) from user_coupon;
 
 해당 SQL 문을 실행한 결과의 이미지이다.
 
-![Image](https://github.com/user-attachments/assets/a759252a-9c62-427c-9ae3-a1162f982e64)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/NoLock_Quantity.png)
 
 정상적으로 7836 개가 생성된 것을 확인할 수 있었다.
 
 그럼 실제 `Coupons` 테이블의 `Quantity` 컬럼에도 잘 적용되었는지 이미지로 확인해보자
 
-![Image](https://github.com/user-attachments/assets/780fa16b-d6bf-4d00-8b21-b766fc85b25c)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/No_Lock_Result.png)
 
 `30000 - 7836 = 22,164` 개가 됐어야 했는데 `25,931`개로 동시성 문제가 확실하게 생겼음을 인지할 수 있었다.
 
-![Image](https://github.com/user-attachments/assets/b4f0aac8-25a9-4724-9e6c-e03bbb9f4533)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/deadlock.png)
 
 심지어 위의 이미지와 같이 k6 마지막에 오류 발생시 로그를 찍어보았을때 데이터베이스 데드락이 발생하여 제외된 부분 22164 개를 제외하고도,
 무려 `25,931 - 22,164 = 3,767`, 즉 `3,767`개의 잘못된 데이터가 생성되고 있음을 확인할 수 있었다.
@@ -154,7 +154,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 #### 무결성 체크
 
-![Image](https://github.com/user-attachments/assets/85787f27-59db-4d9d-af2d-8a8a352ea3fa)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/1%EB%B2%88+%EA%B2%B0%EA%B3%BC.png)
 
 - `50,000 - 29,126 = 20,874` 로 성공적으로 데이터가 처리되었다.   
 
@@ -208,7 +208,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 #### 무결성 체크
 
-![Image](https://github.com/user-attachments/assets/328dbc58-e13f-4a89-9ced-36c1df470879)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/2%EB%B2%88+%EA%B2%B0%EA%B3%BC.png)
 
 - `50,000 - 31,928 = 18,072` 로 성공적으로 데이터가 처리되었다.
 
@@ -261,7 +261,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 #### 무결성 체크
 
-![Image](https://github.com/user-attachments/assets/e159aef1-4085-4f3d-bff4-ea64214c166b)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/3%EB%B2%88+%EA%B2%B0%EA%B3%BC.png)
 
 - `50,000 - 31,274 = 18,726` 로 성공적으로 데이터가 처리되었다.
 
@@ -318,7 +318,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 #### 무결성 체크
 
-![Image](https://github.com/user-attachments/assets/1f125c15-4914-46b5-817e-479b83e779b7)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/4%EB%B2%88+%EA%B2%B0%EA%B3%BC.png)
 
 - `50,000 - 29,980 = 20,020` 로 성공적으로 데이터가 처리되었다.
 
@@ -372,7 +372,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 #### 무결성 체크
 
-![Image](https://github.com/user-attachments/assets/739bb6b8-cc99-4785-946d-1494f2d41d8d)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/5%EB%B2%88+%EA%B2%B0%EA%B3%BC.png)
 
 - `50,000 - 30,226 = 19,774` 로 성공적으로 데이터가 처리되었다.
 
@@ -465,7 +465,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 ### DB 데이터 결과
 
-![Image](https://github.com/user-attachments/assets/eee74a11-d3d0-447e-a24f-4ec8b70cac46)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/Redisson+%EA%B2%B0%EA%B3%BC.png)
 
 - 쿠폰 `100,000`개 중에서 발급 성공한 `51,901`개를 빼면 남은 수량 `48,099`개로 데이터 무결성이 지켜졌다.
 - 초당 처리 가능한 요청도 약 500 개 정도로 `Lettuce`를 이용한 직접 구현에 비해 성능이 크게 향상되었다.
@@ -491,7 +491,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 - 이번엔 내 로컬에 띄워준 Docker Container 에서의 실행 결과를 테스트 해보았다.
 
-![Image](https://github.com/user-attachments/assets/dd5e1ec5-5a9d-43b5-bd45-2cf85cb9ca69)
+
 
 ### 성능 테스트 및 비교 (Redisson 적용, Docker Container)
 
@@ -535,7 +535,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 ### DB 데이터 결과
 
-![Image](https://github.com/user-attachments/assets/0896c9c9-41a0-4ec6-846c-3bb329443c3a)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/Redisson-Docker+%EA%B2%B0%EA%B3%BC.png)
 
 - 쿠폰 `100,000`개 중에서 발급 성공한 `32,377`개를 빼면 남은 수량 `67,623`개로 데이터 무결성이 지켜졌다.
 - 초당 처리 가능한 요청도 약 319 개 정도로 `Local`환경에서의 초당 처리 요청인 500개 정도에서 대략 200개 정도 차이가 난다.
@@ -617,7 +617,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 
 ### DB 데이터 결과
 
-![Image](https://github.com/user-attachments/assets/ccc94933-cee0-435c-af89-1dc1a2dd086b)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/MySQL.png)
 
 - 쿠폰 `100,000`개 중에서 발급 성공한 `53,455`개를 빼면 남은 수량 `46,545`개로 데이터 무결성이 지켜졌다.
 - 초당 처리 가능한 요청도 약 570 개 정도로 생각보다 성능이 좋게 나와서 놀랏다.
@@ -674,7 +674,7 @@ default ✓ [======================================] 0000/2000 VUs  1m30s
 ```
 
 ### DB 데이터 결과
-![Image](https://github.com/user-attachments/assets/2c19973e-d75e-4489-a596-844d113cc624)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/MySQL-Docker+%EA%B2%B0%EA%B3%BC.png)
 
 - 쿠폰 `100,000`개 중에서 발급 성공한 `29,155`개를 빼면 남은 수량 `70,845`개로 데이터 무결성이 지켜졌다.
 - 초당 처리 가능한 요청은 약 304 개로 Local 환경에서 돌렸던 약 570 개보다는 확실히 낮은 성능을 나타낸다.
@@ -724,11 +724,11 @@ iterations.....................: 29155   304.383629/s
 
 ### ECR 이미지
 
-![Image](https://github.com/user-attachments/assets/09a4fa5b-a7c9-4fe6-b2b4-168978e8922c)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/ECR.png)
 
 ### Git Actions 이미지
 
-![Image](https://github.com/user-attachments/assets/a6eb38b4-33f4-4ec2-a55a-6cce2be80ed0)
+![Image](https://sparta-plus.s3.ap-northeast-2.amazonaws.com/Actions+%EC%9D%B4%EB%AF%B8%EC%A7%80.png)
 
 - 성공적으로 test 코드 및 docker 작동 이후에
 - deploy 과정이 실행된다.
