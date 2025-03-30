@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/v1")
 public class HealthController {
 
-    @GetMapping("/health")
+    @GetMapping("/healthy")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("현재 시간 " + LocalDateTime.now() + " / 현재 서버가 정상 작동 중입니다!");
     }
