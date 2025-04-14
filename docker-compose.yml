@@ -16,7 +16,7 @@ services:
         limits:
           memory: 512m
         reservations:
-          memory: 128m
+          memory: 256m
     restart: on-failure
     command: [ "sh", "-c", "sleep 10 && java -jar /app/myapp.jar" ]
   db:
